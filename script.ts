@@ -7,12 +7,34 @@ const gravityInput = document.getElementById(
   "gravity-input",
 ) as HTMLInputElement;
 const heightInput = document.getElementById("height-input") as HTMLInputElement;
+const massInput = document.getElementById("mass-input") as HTMLInputElement;
 const bouncinessSlider = document.getElementById(
   "bounciness-slider",
 ) as HTMLInputElement;
 const bouncinessValue = document.getElementById(
   "bounciness-value",
 ) as HTMLElement;
+const airResistanceSlider = document.getElementById(
+  "air-resistance-slider",
+) as HTMLInputElement;
+const airResistanceValue = document.getElementById(
+  "air-resistance-value",
+) as HTMLElement;
+const timeScaleSlider = document.getElementById(
+  "time-scale-slider",
+) as HTMLInputElement;
+const timeScaleValue = document.getElementById(
+  "time-scale-value",
+) as HTMLElement;
+const presetSelect = document.getElementById(
+  "preset-select",
+) as HTMLSelectElement;
+const showTrajectoryCheckbox = document.getElementById(
+  "show-trajectory",
+) as HTMLInputElement;
+const enableSoundCheckbox = document.getElementById(
+  "enable-sound",
+) as HTMLInputElement;
 
 // Display Elements
 const currentStatus = document.getElementById("current-status") as HTMLElement;
@@ -32,6 +54,19 @@ const bounceNumberDisplay = document.getElementById(
   "bounce-number",
 ) as HTMLElement;
 const energyDisplay = document.getElementById("energy") as HTMLElement;
+const massDisplay = document.getElementById("mass-display") as HTMLElement;
+const kineticEnergyDisplay = document.getElementById(
+  "kinetic-energy",
+) as HTMLElement;
+const potentialEnergyDisplay = document.getElementById(
+  "potential-energy",
+) as HTMLElement;
+const totalEnergyDisplay = document.getElementById(
+  "total-energy",
+) as HTMLElement;
+const airResistanceDisplay = document.getElementById(
+  "air-resistance-display",
+) as HTMLElement;
 
 // Game State
 let gravity: number = 9.8;
@@ -46,6 +81,11 @@ let isPaused: boolean = false;
 let isFalling: boolean = true;
 let energy: number = 100;
 let currentBounceEnergy: number = 100;
+let mass: number = 1.0;
+let airResistance: number = 0.0;
+let timeScale: number = 1.0;
+let showTrajectory: boolean = true;
+let enableSound: boolean = true;
 
 let animationId: number | null = null;
 let lastTime: number = 0;
@@ -54,6 +94,15 @@ let lastTime: number = 0;
 const GROUND_HEIGHT_PERCENT = 90;
 const MIN_BOUNCE_HEIGHT = 0.01;
 const MIN_VELOCITY = 0.05;
+
+// Preset environments
+const PRESETS: Record<string, { gravity: number; description: string }> = {
+  earth: { gravity: 9.8, description: "Earth" },
+  moon: { gravity: 1.62, description: "Moon" },
+  mars: { gravity: 3.71, description: "Mars" },
+  jupiter: { gravity: 24.79, description: "Jupiter" },
+  zero: { gravity: 0.0, description: "Zero Gravity" },
+};
 
 // Clean and validate number input (max 2 decimals for gravity, max 1 for height)
 function validateNumberInput(
@@ -203,6 +252,127 @@ function handleHeightFocus(): void {
   }, 10);
 }
 
+// Handle mass input (max 1 decimal, min 0.1)
+function handleMassInput(): void {
+  const result = validateNumberInput(massInput.value, 1, 0.1);
+
+  // Update the input field with user-friendly display
+  massInput.value = result.display;
+
+  // Store the actual value
+  mass = result.value;
+
+  // Update display
+  if (massDisplay) {
+    massDisplay.textContent = `${formatDisplayNumber(mass, 1)} kg`;
+  }
+}
+
+// Handle air resistance slider
+function handleAirResistanceInput(): void {
+  airResistance = parseFloat(airResistanceSlider.value);
+
+  // Update slider value display
+  if (airResistanceValue) {
+    airResistanceValue.textContent = airResistance.toFixed(2);
+  }
+
+  // Update display
+  if (airResistanceDisplay) {
+    airResistanceDisplay.textContent = airResistance.toFixed(2);
+  }
+}
+
+// Handle time scale slider
+function handleTimeScaleInput(): void {
+  timeScale = parseFloat(timeScaleSlider.value);
+
+  // Update slider value display
+  if (timeScaleValue) {
+    timeScaleValue.textContent = `${timeScale.toFixed(1)}x`;
+  }
+}
+
+// Handle preset selection
+function handlePresetChange(): void {
+  const selectedPreset = presetSelect.value;
+
+  if (selectedPreset === "custom") {
+    return; // Don't change anything
+  }
+
+  const preset = PRESETS[selectedPreset];
+  if (preset) {
+    gravity = preset.gravity;
+    gravityInput.value = gravity.toString();
+    handleGravityInput();
+
+    // Reset preset to custom after applying
+    presetSelect.value = "custom";
+  }
+}
+
+// Handle trajectory checkbox
+function handleTrajectoryToggle(): void {
+  showTrajectory = showTrajectoryCheckbox.checked;
+}
+
+// Handle sound toggle
+function handleSoundToggle(): void {
+  enableSound = enableSoundCheckbox.checked;
+}
+
+// Play bounce sound effect
+function playBounceSound(intensity: number): void {
+  if (!enableSound) return;
+
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.frequency.value = 200 + intensity * 300;
+    oscillator.type = "sine";
+
+    gainNode.gain.setValueAtTime(0.3 * intensity, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.1);
+  } catch (e) {
+    // Audio not supported or failed
+  }
+}
+
+// Export settings as JSON
+function exportSettings(): void {
+  const settings = {
+    gravity,
+    startHeight,
+    mass,
+    bounciness,
+    airResistance,
+    timeScale,
+    showTrajectory,
+    enableSound,
+    timestamp: new Date().toISOString(),
+  };
+
+  const dataStr = JSON.stringify(settings, null, 2);
+  const blob = new Blob([dataStr], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `gravity-sim-settings-${Date.now()}.json`;
+  link.click();
+
+  URL.revokeObjectURL(url);
+}
+
 // Update bounciness from slider (2 decimals)
 function handleBouncinessInput(): void {
   bounciness = parseFloat(bouncinessSlider.value);
@@ -253,6 +423,33 @@ function updateDisplays(): void {
   if (energyDisplay) {
     energyDisplay.textContent = `${energy.toFixed(0)}%`;
   }
+
+  // Mass display
+  if (massDisplay) {
+    massDisplay.textContent = `${formatDisplayNumber(mass, 1)} kg`;
+  }
+
+  // Calculate and display energies
+  const kineticEnergy = 0.5 * mass * Math.pow(velocity, 2);
+  const potentialEnergy = mass * gravity * currentHeight;
+  const totalEnergyVal = kineticEnergy + potentialEnergy;
+
+  if (kineticEnergyDisplay) {
+    kineticEnergyDisplay.textContent = `${kineticEnergy.toFixed(2)} J`;
+  }
+
+  if (potentialEnergyDisplay) {
+    potentialEnergyDisplay.textContent = `${potentialEnergy.toFixed(2)} J`;
+  }
+
+  if (totalEnergyDisplay) {
+    totalEnergyDisplay.textContent = `${totalEnergyVal.toFixed(2)} J`;
+  }
+
+  // Air resistance display
+  if (airResistanceDisplay) {
+    airResistanceDisplay.textContent = airResistance.toFixed(2);
+  }
 }
 
 // Convert meters to screen percentage
@@ -278,16 +475,27 @@ function calculateNextBounceHeight(currentPeakHeight: number): number {
   return currentPeakHeight * Math.pow(bounciness, 2);
 }
 
-// Physics update with correct bounce physics
+// Physics update with correct bounce physics and air resistance
 function updatePhysics(deltaTime: number): void {
   if (!isRunning || isPaused) return;
 
-  time += deltaTime;
+  // Apply time scale
+  const scaledDeltaTime = deltaTime * timeScale;
+  time += scaledDeltaTime;
 
   if (isFalling) {
     // FALLING: Velocity increases (downward positive)
-    velocity += gravity * deltaTime;
-    currentHeight -= velocity * deltaTime;
+    // Apply gravity
+    velocity += gravity * scaledDeltaTime;
+
+    // Apply air resistance (drag force proportional to velocity squared)
+    if (airResistance > 0 && velocity > 0) {
+      const dragForce = airResistance * Math.pow(velocity, 2);
+      const dragAcceleration = dragForce / mass;
+      velocity -= dragAcceleration * scaledDeltaTime;
+    }
+
+    currentHeight -= velocity * scaledDeltaTime;
 
     // Check for ground collision
     if (currentHeight <= 0) {
@@ -295,6 +503,10 @@ function updatePhysics(deltaTime: number): void {
 
       // Calculate impact velocity
       const impactVelocity = Math.abs(velocity);
+
+      // Play bounce sound based on impact intensity
+      const intensity = Math.min(1, impactVelocity / 20);
+      playBounceSound(intensity);
 
       // Calculate bounce velocity using coefficient of restitution
       const bounceVelocity = impactVelocity * bounciness;
@@ -327,10 +539,17 @@ function updatePhysics(deltaTime: number): void {
     }
   } else {
     // RISING: Object moves UP after bounce
-    velocity += gravity * deltaTime;
+    velocity += gravity * scaledDeltaTime;
+
+    // Apply air resistance when moving upward
+    if (airResistance > 0 && velocity < 0) {
+      const dragForce = airResistance * Math.pow(Math.abs(velocity), 2);
+      const dragAcceleration = dragForce / mass;
+      velocity += dragAcceleration * scaledDeltaTime; // Drag opposes motion
+    }
 
     // Since velocity is negative (upward), subtracting it increases height
-    currentHeight -= velocity * deltaTime;
+    currentHeight -= velocity * scaledDeltaTime;
 
     // Check if reached peak of bounce
     if (velocity >= -0.01) {
@@ -376,7 +595,10 @@ function startSimulation(): void {
   // Get values from inputs (already validated)
   gravity = parseFloat(gravityInput.value) || 9.8;
   startHeight = parseFloat(heightInput.value) || 30;
+  mass = parseFloat(massInput.value) || 1.0;
   bounciness = parseFloat(bouncinessSlider.value);
+  airResistance = parseFloat(airResistanceSlider.value);
+  timeScale = parseFloat(timeScaleSlider.value);
 
   // Reset game state
   velocity = 0;
@@ -464,12 +686,18 @@ function initialize(): void {
   // Set initial values
   gravityInput.value = "9.8";
   heightInput.value = "30";
+  massInput.value = "1.0";
   bouncinessSlider.value = "0.70";
+  airResistanceSlider.value = "0.0";
+  timeScaleSlider.value = "1";
 
   // Update all displays
   handleGravityInput();
   handleHeightInput();
+  handleMassInput();
   handleBouncinessInput();
+  handleAirResistanceInput();
+  handleTimeScaleInput();
   updateDisplays();
 
   // Event Listeners for inputs
@@ -481,7 +709,16 @@ function initialize(): void {
   heightInput.addEventListener("focus", handleHeightFocus);
   heightInput.addEventListener("blur", handleHeightInput);
 
+  massInput.addEventListener("input", handleMassInput);
+  massInput.addEventListener("focus", handleGravityFocus);
+  massInput.addEventListener("blur", handleMassInput);
+
   bouncinessSlider.addEventListener("input", handleBouncinessInput);
+  airResistanceSlider.addEventListener("input", handleAirResistanceInput);
+  timeScaleSlider.addEventListener("input", handleTimeScaleInput);
+  presetSelect.addEventListener("change", handlePresetChange);
+  showTrajectoryCheckbox.addEventListener("change", handleTrajectoryToggle);
+  enableSoundCheckbox.addEventListener("change", handleSoundToggle);
 
   // Allow Enter key to blur/confirm input
   gravityInput.addEventListener("keydown", function (e) {
@@ -496,16 +733,24 @@ function initialize(): void {
     }
   });
 
+  massInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      this.blur();
+    }
+  });
+
   // Event Listeners for buttons
   const startBtn = document.getElementById("start-btn");
   const pauseBtn = document.getElementById("pause-btn");
   const againBtn = document.getElementById("again-btn");
   const settingsBtn = document.getElementById("settings-btn");
+  const exportBtn = document.getElementById("export-btn");
 
   if (startBtn) startBtn.addEventListener("click", startSimulation);
   if (pauseBtn) pauseBtn.addEventListener("click", togglePause);
   if (againBtn) againBtn.addEventListener("click", resetSimulation);
   if (settingsBtn) settingsBtn.addEventListener("click", showSettingsMenu);
+  if (exportBtn) exportBtn.addEventListener("click", exportSettings);
 
   // Keyboard shortcuts
   document.addEventListener("keydown", function (e) {
