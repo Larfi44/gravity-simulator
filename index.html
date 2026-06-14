@@ -12,23 +12,6 @@
       <div class="settings-content">
         <h2>Gravity Simulator</h2>
 
-        <!-- Preset Selection -->
-        <div class="setting-group">
-          <label for="preset-select">
-            <span class="label-text">Environment Preset:</span>
-            <div class="input-combo">
-              <select id="preset-select" class="select-field">
-                <option value="custom">Custom</option>
-                <option value="earth">Earth (9.8 m/s²)</option>
-                <option value="moon">Moon (1.62 m/s²)</option>
-                <option value="mars">Mars (3.71 m/s²)</option>
-                <option value="jupiter">Jupiter (24.79 m/s²)</option>
-                <option value="zero">Zero Gravity</option>
-              </select>
-            </div>
-          </label>
-        </div>
-
         <div class="setting-group">
           <label for="gravity-input">
             <span class="label-text">Gravity Acceleration:</span>
@@ -43,6 +26,13 @@
                   class="number-field"
                 />
                 <span class="unit">m/s²</span>
+              </div>
+              <div class="preset-buttons">
+                <button class="preset-btn" data-gravity="9.8">Earth</button>
+                <button class="preset-btn" data-gravity="1.62">Moon</button>
+                <button class="preset-btn" data-gravity="3.71">Mars</button>
+                <button class="preset-btn" data-gravity="24.79">Jupiter</button>
+                <button class="preset-btn" data-gravity="0">Zero-G</button>
               </div>
             </div>
           </label>
@@ -62,32 +52,6 @@
                   class="number-field"
                 />
                 <span class="unit">meters</span>
-              </div>
-            </div>
-          </label>
-          <div class="slider-info">
-            <div class="slider-labels">
-              <span>1 m</span>
-              <span>100 m</span>
-              <span>200 m</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="setting-group">
-          <label for="mass-input">
-            <span class="label-text">Object Mass:</span>
-            <div class="input-combo">
-              <div class="number-input">
-                <input
-                  type="number"
-                  id="mass-input"
-                  min="0.1"
-                  step="0.1"
-                  value="1.0"
-                  class="number-field"
-                />
-                <span class="unit">kg</span>
               </div>
             </div>
           </label>
@@ -129,32 +93,18 @@
 
         <div class="setting-group">
           <label for="time-scale-slider">
-            <span class="label-text">Time Scale (Slow Motion): <span id="time-scale-value">1.0x</span></span>
+            <span class="label-text">Time Scale: <span id="time-scale-value">1.0x</span></span>
             <div class="input-combo">
               <input
                 type="range"
                 id="time-scale-slider"
-                min="0.1"
-                max="2.0"
-                step="0.1"
+                min="0.01"
+                max="1000"
+                step="0.01"
                 value="1.0"
                 class="slider"
               />
             </div>
-          </label>
-        </div>
-
-        <div class="setting-group">
-          <label class="checkbox-label">
-            <input type="checkbox" id="show-trajectory" checked />
-            <span class="label-text">Show Trajectory Prediction</span>
-          </label>
-        </div>
-
-        <div class="setting-group">
-          <label class="checkbox-label">
-            <input type="checkbox" id="enable-sound" checked />
-            <span class="label-text">Enable Sound Effects</span>
           </label>
         </div>
 
@@ -163,9 +113,13 @@
             <span class="btn-icon">🚀</span>
             Start Simulation
           </button>
-          <button id="export-btn" class="btn btn-secondary">
+          <button id="save-btn" class="btn btn-secondary">
             <span class="btn-icon">💾</span>
-            Export Settings
+            Save
+          </button>
+          <button id="load-btn" class="btn btn-secondary">
+            <span class="btn-icon">📂</span>
+            Load
           </button>
         </div>
       </div>
@@ -229,10 +183,6 @@
         <div class="data-row">
           <span class="data-label">Bounce #:</span>
           <span id="bounce-number" class="data-value">0</span>
-        </div>
-        <div class="data-row">
-          <span class="data-label">Mass:</span>
-          <span id="mass-display" class="data-value">1.0 kg</span>
         </div>
         <div class="data-row">
           <span class="data-label">Kinetic Energy:</span>
