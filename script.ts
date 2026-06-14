@@ -95,11 +95,8 @@ class GravitySimulator {
         });
 
         document.getElementById('btnStart')!.addEventListener('click', () => this.startSimulation());
-        document.getElementById('btnReset')!.addEventListener('click', () => this.resetSimulation());
         document.getElementById('btnSave')!.addEventListener('click', () => this.showSaveModal());
-        document.getElementById('btnSaveBottom')!.addEventListener('click', () => this.showSaveModal());
         document.getElementById('btnLoad')!.addEventListener('click', () => this.showLoadModal());
-        document.getElementById('btnLoadBottom')!.addEventListener('click', () => this.showLoadModal());
 
         const timeScaleSlider = document.getElementById('timeScaleSlider') as HTMLInputElement;
         const simSpeedDisplay = document.getElementById('simSpeedDisplay') as HTMLElement;
@@ -267,7 +264,9 @@ class GravitySimulator {
         if (this.animationId) { cancelAnimationFrame(this.animationId); this.animationId = null; }
         document.getElementById('sim-controls')!.classList.add('hidden');
         document.getElementById('settings-panel')!.classList.remove('hidden');
-        this.resetSimulation();
+        this.state.position = { x: 50, y: this.canvas.height - 30 };
+        this.state.velocity = { x: 0, y: 0 };
+        this.draw();
     }
 
     private resetSimulation(): void {
