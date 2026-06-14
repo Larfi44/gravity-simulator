@@ -20,11 +20,9 @@ interface DOMElements {
   heightInput: HTMLInputElement;
   bouncinessSlider: HTMLInputElement;
   airResistanceSlider: HTMLInputElement;
-  timeScaleSlider: HTMLInputElement;
   simTimeScaleSlider: HTMLInputElement;
   bouncinessValue: HTMLElement;
   airResistanceValue: HTMLElement;
-  timeScaleValue: HTMLElement;
   simTimeScaleValue: HTMLElement;
   timeScaleDisplay: HTMLElement;
   startBtn: HTMLElement;
@@ -78,11 +76,9 @@ function initializeElements(): void {
   elements.heightInput = document.getElementById('height-input') as HTMLInputElement;
   elements.bouncinessSlider = document.getElementById('bounciness-slider') as HTMLInputElement;
   elements.airResistanceSlider = document.getElementById('air-resistance-slider') as HTMLInputElement;
-  elements.timeScaleSlider = document.getElementById('time-scale-slider') as HTMLInputElement;
   elements.simTimeScaleSlider = document.getElementById('sim-time-scale-slider') as HTMLInputElement;
   elements.bouncinessValue = document.getElementById('bounciness-value') as HTMLElement;
   elements.airResistanceValue = document.getElementById('air-resistance-value') as HTMLElement;
-  elements.timeScaleValue = document.getElementById('time-scale-value') as HTMLElement;
   elements.simTimeScaleValue = document.getElementById('sim-time-scale-value') as HTMLElement;
   elements.timeScaleDisplay = document.getElementById('time-scale-display') as HTMLElement;
   elements.startBtn = document.getElementById('start-btn') as HTMLElement;
@@ -111,7 +107,6 @@ function initializeElements(): void {
 function updateDisplays(): void {
   elements.bouncinessValue.textContent = settings.bounciness.toFixed(2);
   elements.airResistanceValue.textContent = settings.airResistance.toFixed(2);
-  elements.timeScaleValue.textContent = settings.timeScale.toFixed(2) + 'x';
   elements.simTimeScaleValue.textContent = settings.timeScale.toFixed(2) + 'x';
   elements.timeScaleDisplay.textContent = settings.timeScale.toFixed(2) + 'x';
   elements.currentGravity.textContent = settings.gravity.toFixed(2) + ' m/s²';
@@ -201,7 +196,6 @@ function showLoadMenu(): void {
   elements.heightInput.value = settings.height.toString();
   elements.bouncinessSlider.value = settings.bounciness.toString();
   elements.airResistanceSlider.value = settings.airResistance.toString();
-  elements.timeScaleSlider.value = settings.timeScale.toString();
   elements.simTimeScaleSlider.value = settings.timeScale.toString();
   
   updateDisplays();
@@ -429,12 +423,6 @@ function setupEventListeners(): void {
   // Air resistance slider change
   elements.airResistanceSlider.addEventListener('input', () => {
     settings.airResistance = parseFloat(elements.airResistanceSlider.value);
-    updateDisplays();
-  });
-
-  // Time scale slider change in settings (for initial setup)
-  elements.timeScaleSlider.addEventListener('input', () => {
-    settings.timeScale = parseFloat(elements.timeScaleSlider.value);
     updateDisplays();
   });
 
