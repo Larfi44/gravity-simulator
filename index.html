@@ -1,246 +1,423 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="style.css" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gravity Simulator</title>
-  </head>
-  <body>
-    <!-- Settings Menu -->
-    <div id="settings-menu" class="settings-menu">
-      <div class="settings-content">
-        <h2>Gravity Simulator</h2>
-
-        <div class="setting-group">
-          <label for="gravity-input">
-            <span class="label-text">Gravity Acceleration:</span>
-            <div class="input-combo">
-              <div class="number-input">
-                <input
-                  type="number"
-                  id="gravity-input"
-                  min="0.01"
-                  step="0.1"
-                  value="9.8"
-                  class="number-field"
-                />
-                <span class="unit">m/s²</span>
-              </div>
-              <div class="preset-buttons">
-                <button class="preset-btn" data-gravity="9.8">Earth</button>
-                <button class="preset-btn" data-gravity="1.62">Moon</button>
-                <button class="preset-btn" data-gravity="3.71">Mars</button>
-                <button class="preset-btn" data-gravity="24.79">Jupiter</button>
-                <button class="preset-btn" data-gravity="0">Zero-G</button>
-              </div>
-            </div>
-          </label>
-        </div>
-
-        <div class="setting-group">
-          <label for="height-input">
-            <span class="label-text">Initial Height:</span>
-            <div class="input-combo">
-              <div class="number-input">
-                <input
-                  type="number"
-                  id="height-input"
-                  min="0.1"
-                  step="1"
-                  value="30"
-                  class="number-field"
-                />
-                <span class="unit">meters</span>
-              </div>
-            </div>
-          </label>
-        </div>
-
-        <div class="setting-group">
-          <label for="bounciness-slider">
-            <span class="label-text">Bounciness (Coefficient of Restitution): <span id="bounciness-value">0.70</span></span>
-            <div class="input-combo">
-              <input
-                type="range"
-                id="bounciness-slider"
-                min="0"
-                max="0.99"
-                step="0.01"
-                value="0.7"
-                class="slider"
-              />
-            </div>
-          </label>
-        </div>
-
-        <div class="setting-group">
-          <label for="air-resistance-slider">
-            <span class="label-text">Air Resistance (Drag Coefficient): <span id="air-resistance-value">0.00</span></span>
-            <div class="input-combo">
-              <input
-                type="range"
-                id="air-resistance-slider"
-                min="0"
-                max="1.0"
-                step="0.01"
-                value="0.0"
-                class="slider"
-              />
-            </div>
-          </label>
-        </div>
-
-        <div class="button-group">
-          <button id="start-btn" class="btn btn-primary">
-            <span class="btn-icon">🚀</span>
-            Start Simulation
-          </button>
-          <button id="save-btn" class="btn btn-secondary">
-            <span class="btn-icon">💾</span>
-            Save
-          </button>
-          <button id="load-btn" class="btn btn-secondary">
-            <span class="btn-icon">📂</span>
-            Load
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Game Elements -->
-    <div id="ground"></div>
-    <div id="object"></div>
-
-    <!-- Controls -->
-    <div class="controls">
-      <div class="control-group">
-        <button id="pause-btn" class="btn-control">
-          <span class="icon">⏸️</span>
-          <span class="text">Pause</span>
-        </button>
-        <button id="again-btn" class="btn-control">
-          <span class="icon">🔄</span>
-          <span class="text">Again</span>
-        </button>
-        <button id="settings-btn" class="btn-control">
-          <span class="icon">⚙️</span>
-          <span class="text">Settings</span>
-        </button>
-      </div>
-
-      <div class="stats">
-        <div class="stat-item">
-          <span class="stat-label">Status:</span>
-          <span id="current-status" class="stat-value">Ready</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Gravity:</span>
-          <span id="current-gravity" class="stat-value">9.8 m/s²</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Bounciness:</span>
-          <span id="current-bounciness" class="stat-value">0.7</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Time Scale:</span>
-          <span id="time-scale-display" class="stat-value">1.0x</span>
-        </div>
-      </div>
-
-      <div class="time-scale-control">
-        <label for="sim-time-scale-slider">
-          <span class="label-text">Time Scale: <span id="sim-time-scale-value">1.0x</span></span>
-        </label>
-        <input
-          type="range"
-          id="sim-time-scale-slider"
-          min="0.01"
-          max="1000"
-          step="0.01"
-          value="1.0"
-          class="slider"
-        />
-      </div>
-    </div>
-
-    <!-- Info Panel -->
-    <div class="info">
-      <div class="info-header">
-        <h3>📈 Physics Data</h3>
-      </div>
-      <div class="info-content">
-        <div class="data-row">
-          <span class="data-label">Height:</span>
-          <span id="height-display" class="data-value">30.00 m</span>
-        </div>
-        <div class="data-row">
-          <span class="data-label">Velocity:</span>
-          <span id="velocity" class="data-value">0.00 m/s</span>
-        </div>
-        <div class="data-row">
-          <span class="data-label">Time:</span>
-          <span id="time" class="data-value">0.00 s</span>
-        </div>
-        <div class="data-row">
-          <span class="data-label">Bounce #:</span>
-          <span id="bounce-number" class="data-value">0</span>
-        </div>
-        <div class="data-row">
-          <span class="data-label">Kinetic Energy:</span>
-          <span id="kinetic-energy" class="data-value">0.00 J</span>
-        </div>
-        <div class="data-row">
-          <span class="data-label">Potential Energy:</span>
-          <span id="potential-energy" class="data-value">294.00 J</span>
-        </div>
-        <div class="data-row">
-          <span class="data-label">Total Energy:</span>
-          <span id="total-energy" class="data-value">294.00 J</span>
-        </div>
-        <div class="data-row">
-          <span class="data-label">Air Resistance:</span>
-          <span id="air-resistance-display" class="data-value">0.00</span>
-        </div>
-      </div>
-
-      <div class="input-focus-notice" id="input-focus-notice">
-        <span class="notice-icon">⌨️</span>
-        <span class="notice-text">Press Enter to confirm input</span>
-      </div>
-    </div>
-  </body>
-  <script src="https://cdn.jsdelivr.net/npm/typescript@5.4.2/lib/typescript.js"></script>
-  <script>
-    // Load and compile TypeScript directly in browser
-    async function loadTypeScript() {
-      try {
-        const response = await fetch('script.ts');
-        const tsCode = await response.text();
-        
-        const result = ts.transpileModule(tsCode, {
-          compilerOptions: {
-            target: ts.ScriptTarget.ES2020,
-            module: ts.ModuleKind.ESNext,
-            lib: ['dom', 'es2020']
-          }
-        });
-        
-        if (result.diagnostics && result.diagnostics.length > 0) {
-          console.error('TypeScript compilation errors:', result.diagnostics);
-          return;
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg: #0f172a;
+            --panel-bg: #1e293b;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+            --success: #22c55e;
         }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        canvas {
+            display: block;
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            flex-grow: 1;
+            cursor: crosshair;
+        }
+
+        #settings-panel {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            width: 90%;
+            max-width: 600px;
+            border: 1px solid rgba(255,255,255,0.1);
+            z-index: 10;
+        }
+
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: var(--text);
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .control-group {
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .control-group.full-width {
+            grid-column: span 2;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .planet-presets {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 5px;
+        }
+
+        .planet-btn {
+            flex: 1;
+            min-width: 60px;
+            padding: 8px 4px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.05);
+            color: var(--text);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .planet-btn:hover {
+            background: rgba(255,255,255,0.15);
+            transform: translateY(-2px);
+        }
+
+        .planet-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            font-weight: bold;
+        }
+
+        input[type="number"], input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: var(--primary-hover);
+        }
+
+        .value-display {
+            float: right;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover { background: var(--primary-hover); }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.2); }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+        .btn-danger:hover { background: var(--danger); color: white; }
+
+        #sim-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(30, 41, 59, 0.9);
+            padding: 15px 25px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(5px);
+            z-index: 20;
+        }
+
+        .sim-stat {
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        .sim-stat span {
+            color: var(--text);
+            font-weight: bold;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background: var(--panel-bg);
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .save-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .save-item {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .save-item:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--primary);
+        }
+
+        .save-info h4 {
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+        .save-info p {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .save-actions button {
+            margin-left: 5px;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+        }
+
+        .instructions {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="settings-panel">
+        <h2>Simulation Settings</h2>
         
-        const jsCode = result.outputText;
-        const script = document.createElement('script');
-        script.type = 'module';
-        script.textContent = jsCode;
-        document.head.appendChild(script);
-      } catch (error) {
-        console.error('Error loading TypeScript:', error);
-      }
-    }
+        <div class="controls-grid">
+            <div class="control-group">
+                <label>Gravity Acceleration (m/s²) <span id="gravityValue" class="value-display">9.81</span></label>
+                <input type="range" id="gravitySlider" min="0" max="50" step="0.01" value="9.81">
+                <div class="planet-presets">
+                    <button class="planet-btn active" data-g="9.81">Earth</button>
+                    <button class="planet-btn" data-g="1.62">Moon</button>
+                    <button class="planet-btn" data-g="3.71">Mars</button>
+                    <button class="planet-btn" data-g="24.79">Jupiter</button>
+                    <button class="planet-btn" data-g="0">Zero-G</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Initial Speed (m/s) <span id="speedValue" class="value-display">50</span></label>
+                <input type="range" id="speedSlider" min="0" max="200" step="1" value="50">
+                <div style="margin-top: 10px;">
+                    <label style="font-size: 0.8rem;">Launch Angle (deg)</label>
+                    <input type="number" id="angleInput" value="45" min="0" max="90">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Air Resistance (Drag) <span id="dragValue" class="value-display">0.00</span></label>
+                <input type="range" id="dragSlider" min="0" max="1" step="0.01" value="0">
+            </div>
+
+            <div class="control-group full-width">
+                <label>Data Management</label>
+                <div class="action-row">
+                    <button class="btn btn-secondary" id="btnSave">💾 Save Settings</button>
+                    <button class="btn btn-secondary" id="btnLoad">📂 Load Settings</button>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <div class="action-row" style="margin-bottom: 15px;">
+                <button class="btn btn-primary" id="btnStart">▶ Start Simulation</button>
+                <button class="btn btn-secondary" id="btnReset">↺ Reset</button>
+            </div>
+            
+            <div class="action-row">
+                <button class="btn btn-secondary" id="btnSaveBottom">💾 Save Settings</button>
+                <button class="btn btn-secondary" id="btnLoadBottom">📂 Load Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="sim-controls" class="hidden">
+        <div class="sim-stat">Speed: <span id="simSpeedDisplay">x1.00</span></div>
+        <input type="range" id="timeScaleSlider" min="-1000" max="1000" value="0" style="width: 200px;">
+        <button class="btn btn-primary" id="btnPauseSim" style="padding: 5px 15px; min-width: 80px;">Pause</button>
+        <button class="btn btn-secondary" id="btnCloseSim" style="padding: 5px 15px;">✕ Close</button>
+    </div>
+
+    <canvas id="simCanvas"></canvas>
+
+    <div class="instructions">
+        Click & Drag on canvas to launch<br>
+        Settings adjust in real-time
+    </div>
+
+    <div class="modal-overlay" id="saveModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Saved Configurations</h3>
+                <button class="btn btn-danger" id="closeModal" style="min-width: auto; padding: 5px 10px;">✕</button>
+            </div>
+            <div id="saveListContainer" class="save-list">
+                <p style="text-align:center; color: var(--text-muted);">No saved settings found.</p>
+            </div>
+        </div>
+    </div>
     
-    loadTypeScript();
-  </script>
+    <script src="https://cdn.jsdelivr.net/npm/typescript@5.3.3/lib/typescript.js"></script>
+    <script>
+        async function loadAndRunTypeScript() {
+            try {
+                const response = await fetch('script.ts');
+                if (!response.ok) throw new Error('Could not fetch script.ts');
+                const tsCode = await response.text();
+                
+                const result = ts.transpile(tsCode, {
+                    target: ts.ScriptTarget.ES2020,
+                    module: ts.ModuleKind.ESNext
+                });
+                
+                const script = document.createElement('script');
+                script.type = 'module';
+                script.textContent = result;
+                document.head.appendChild(script);
+            } catch (error) {
+                console.error('Error loading TypeScript:', error);
+                document.body.innerHTML = `<div style="color:red; padding:20px;"><h3>Error Loading Simulator</h3><p>${error.message}</p><p>Make sure script.ts exists in the same directory.</p></div>`;
+            }
+        }
+        loadAndRunTypeScript();
+    </script>
+</body>
 </html>

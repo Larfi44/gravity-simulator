@@ -1,499 +1,344 @@
-// Gravity Simulator - TypeScript Implementation
-
-// Interfaces for type safety
-interface SimulationSettings {
-  gravity: number;
-  height: number;
-  bounciness: number;
-  airResistance: number;
-  timeScale: number;
+interface SimulationState {
+    gravity: number;
+    initialSpeed: number;
+    angle: number;
+    drag: number;
+    isRunning: boolean;
+    timeScale: number;
+    position: { x: number; y: number };
+    velocity: { x: number; y: number };
 }
 
-interface SavedSetting extends SimulationSettings {
-  name: string;
-  timestamp: number;
+interface SavedConfig {
+    name: string;
+    timestamp: number;
+    gravity: number;
+    initialSpeed: number;
+    angle: number;
+    drag: number;
 }
 
-interface DOMElements {
-  settingsMenu: HTMLElement;
-  gravityInput: HTMLInputElement;
-  heightInput: HTMLInputElement;
-  bouncinessSlider: HTMLInputElement;
-  airResistanceSlider: HTMLInputElement;
-  simTimeScaleSlider: HTMLInputElement;
-  bouncinessValue: HTMLElement;
-  airResistanceValue: HTMLElement;
-  simTimeScaleValue: HTMLElement;
-  timeScaleDisplay: HTMLElement;
-  startBtn: HTMLElement;
-  saveBtn: HTMLElement;
-  loadBtn: HTMLElement;
-  pauseBtn: HTMLElement;
-  againBtn: HTMLElement;
-  settingsBtn: HTMLElement;
-  ground: HTMLElement;
-  object: HTMLElement;
-  currentStatus: HTMLElement;
-  currentGravity: HTMLElement;
-  currentBounciness: HTMLElement;
-  heightDisplay: HTMLElement;
-  velocity: HTMLElement;
-  time: HTMLElement;
-  bounceNumber: HTMLElement;
-  kineticEnergy: HTMLElement;
-  potentialEnergy: HTMLElement;
-  totalEnergy: HTMLElement;
-  airResistanceDisplay: HTMLElement;
-  inputFocusNotice: HTMLElement;
-}
+class GravitySimulator {
+    private canvas: HTMLCanvasElement;
+    private ctx: CanvasRenderingContext2D;
+    private state: SimulationState;
+    private animationId: number | null = null;
+    private saves: SavedConfig[] = [];
 
-// Global variables
-let settings: SimulationSettings = {
-  gravity: 9.8,
-  height: 30,
-  bounciness: 0.7,
-  airResistance: 0.0,
-  timeScale: 1.0
-};
-
-let isRunning: boolean = false;
-let isPaused: boolean = false;
-let animationId: number | null = null;
-let currentTime: number = 0;
-let currentHeight: number = 30;
-let currentVelocity: number = 0;
-let bounceCount: number = 0;
-let objectMass: number = 1.0; // Fixed mass for energy calculations
-const pixelsPerMeter: number = 10;
-
-// DOM Elements
-const elements: DOMElements = {} as DOMElements;
-
-// Initialize DOM elements
-function initializeElements(): void {
-  elements.settingsMenu = document.getElementById('settings-menu') as HTMLElement;
-  elements.gravityInput = document.getElementById('gravity-input') as HTMLInputElement;
-  elements.heightInput = document.getElementById('height-input') as HTMLInputElement;
-  elements.bouncinessSlider = document.getElementById('bounciness-slider') as HTMLInputElement;
-  elements.airResistanceSlider = document.getElementById('air-resistance-slider') as HTMLInputElement;
-  elements.simTimeScaleSlider = document.getElementById('sim-time-scale-slider') as HTMLInputElement;
-  elements.bouncinessValue = document.getElementById('bounciness-value') as HTMLElement;
-  elements.airResistanceValue = document.getElementById('air-resistance-value') as HTMLElement;
-  elements.simTimeScaleValue = document.getElementById('sim-time-scale-value') as HTMLElement;
-  elements.timeScaleDisplay = document.getElementById('time-scale-display') as HTMLElement;
-  elements.startBtn = document.getElementById('start-btn') as HTMLElement;
-  elements.saveBtn = document.getElementById('save-btn') as HTMLElement;
-  elements.loadBtn = document.getElementById('load-btn') as HTMLElement;
-  elements.pauseBtn = document.getElementById('pause-btn') as HTMLElement;
-  elements.againBtn = document.getElementById('again-btn') as HTMLElement;
-  elements.settingsBtn = document.getElementById('settings-btn') as HTMLElement;
-  elements.ground = document.getElementById('ground') as HTMLElement;
-  elements.object = document.getElementById('object') as HTMLElement;
-  elements.currentStatus = document.getElementById('current-status') as HTMLElement;
-  elements.currentGravity = document.getElementById('current-gravity') as HTMLElement;
-  elements.currentBounciness = document.getElementById('current-bounciness') as HTMLElement;
-  elements.heightDisplay = document.getElementById('height-display') as HTMLElement;
-  elements.velocity = document.getElementById('velocity') as HTMLElement;
-  elements.time = document.getElementById('time') as HTMLElement;
-  elements.bounceNumber = document.getElementById('bounce-number') as HTMLElement;
-  elements.kineticEnergy = document.getElementById('kinetic-energy') as HTMLElement;
-  elements.potentialEnergy = document.getElementById('potential-energy') as HTMLElement;
-  elements.totalEnergy = document.getElementById('total-energy') as HTMLElement;
-  elements.airResistanceDisplay = document.getElementById('air-resistance-display') as HTMLElement;
-  elements.inputFocusNotice = document.getElementById('input-focus-notice') as HTMLElement;
-}
-
-// Update display values
-function updateDisplays(): void {
-  elements.bouncinessValue.textContent = settings.bounciness.toFixed(2);
-  elements.airResistanceValue.textContent = settings.airResistance.toFixed(2);
-  elements.simTimeScaleValue.textContent = settings.timeScale.toFixed(2) + 'x';
-  elements.timeScaleDisplay.textContent = settings.timeScale.toFixed(2) + 'x';
-  elements.currentGravity.textContent = settings.gravity.toFixed(2) + ' m/s²';
-  elements.currentBounciness.textContent = settings.bounciness.toFixed(2);
-  elements.airResistanceDisplay.textContent = settings.airResistance.toFixed(2);
-}
-
-// Save settings to localStorage with custom name
-function saveSettings(): void {
-  const saveName = prompt('Enter a name for this save:');
-  if (!saveName || saveName.trim() === '') {
-    alert('Please enter a valid name for the save.');
-    return;
-  }
-
-  const savedSettings: SavedSetting = {
-    ...settings,
-    name: saveName.trim(),
-    timestamp: Date.now()
-  };
-
-  // Get existing saves
-  const existingSaves = getSaves();
-  
-  // Check if name already exists
-  const existingIndex = existingSaves.findIndex(s => s.name === savedSettings.name);
-  if (existingIndex !== -1) {
-    if (confirm(`A save named "${savedSettings.name}" already exists. Overwrite?`)) {
-      existingSaves[existingIndex] = savedSettings;
-    } else {
-      return;
+    constructor() {
+        this.canvas = document.getElementById('simCanvas') as HTMLCanvasElement;
+        this.ctx = this.canvas.getContext('2d')!;
+        this.state = {
+            gravity: 9.81,
+            initialSpeed: 50,
+            angle: 45,
+            drag: 0,
+            isRunning: false,
+            timeScale: 1,
+            position: { x: 50, y: 0 },
+            velocity: { x: 0, y: 0 }
+        };
+        this.loadSaves();
+        this.initElements();
+        this.resizeCanvas();
+        this.updateDisplays();
+        window.addEventListener('resize', () => this.resizeCanvas());
     }
-  } else {
-    existingSaves.push(savedSettings);
-  }
 
-  localStorage.setItem('gravitySimulatorSaves', JSON.stringify(existingSaves));
-  alert(`Settings saved as "${savedSettings.name}"!`);
-}
-
-// Get all saved settings from localStorage
-function getSaves(): SavedSetting[] {
-  const savesJson = localStorage.getItem('gravitySimulatorSaves');
-  return savesJson ? JSON.parse(savesJson) : [];
-}
-
-// Load settings menu
-function showLoadMenu(): void {
-  const saves = getSaves();
-  
-  if (saves.length === 0) {
-    alert('No saved settings found.');
-    return;
-  }
-
-  let message = 'Saved Settings:\n\n';
-  saves.forEach((save, index) => {
-    const date = new Date(save.timestamp).toLocaleDateString();
-    message += `${index + 1}. ${save.name} (${date})\n`;
-    message += `   Gravity: ${save.gravity}, Height: ${save.height}, Bounciness: ${save.bounciness}\n\n`;
-  });
-  message += '\nEnter the number of the save to load, or 0 to cancel:';
-
-  const choice = prompt(message);
-  if (!choice) return;
-  
-  const selectedIndex = parseInt(choice, 10) - 1;
-  
-  if (isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex >= saves.length) {
-    if (parseInt(choice, 10) !== 0) {
-      alert('Invalid selection.');
+    private loadSaves(): void {
+        const saved = localStorage.getItem('gravitySaves');
+        if (saved) {
+            try { this.saves = JSON.parse(saved); } catch (e) { this.saves = []; }
+        }
     }
-    return;
-  }
 
-  const selectedSave = saves[selectedIndex];
-  settings = {
-    gravity: selectedSave.gravity,
-    height: selectedSave.height,
-    bounciness: selectedSave.bounciness,
-    airResistance: selectedSave.airResistance,
-    timeScale: selectedSave.timeScale
-  };
-
-  // Update UI
-  elements.gravityInput.value = settings.gravity.toString();
-  elements.heightInput.value = settings.height.toString();
-  elements.bouncinessSlider.value = settings.bounciness.toString();
-  elements.airResistanceSlider.value = settings.airResistance.toString();
-  elements.simTimeScaleSlider.value = settings.timeScale.toString();
-  
-  updateDisplays();
-  alert(`Loaded "${selectedSave.name}"!`);
-}
-
-// Delete a save
-function deleteSave(index: number): void {
-  const saves = getSaves();
-  if (index >= 0 && index < saves.length) {
-    const deleted = saves.splice(index, 1);
-    localStorage.setItem('gravitySimulatorSaves', JSON.stringify(saves));
-    alert(`Deleted "${deleted[0].name}"`);
-  }
-}
-
-// Physics simulation
-function simulatePhysics(deltaTime: number): void {
-  if (!isRunning || isPaused) return;
-
-  const scaledDeltaTime = deltaTime * settings.timeScale;
-  currentTime += scaledDeltaTime;
-
-  // Apply gravity
-  currentVelocity += settings.gravity * scaledDeltaTime;
-
-  // Apply air resistance (drag force proportional to velocity squared)
-  if (settings.airResistance > 0 && currentVelocity !== 0) {
-    const dragForce = settings.airResistance * currentVelocity * Math.abs(currentVelocity);
-    currentVelocity -= dragForce * scaledDeltaTime;
-  }
-
-  // Update position
-  currentHeight -= currentVelocity * scaledDeltaTime;
-
-  // Ground collision detection
-  if (currentHeight <= 0) {
-    currentHeight = 0;
-    
-    if (Math.abs(currentVelocity) > 0.1) {
-      // Bounce
-      currentVelocity = -currentVelocity * settings.bounciness;
-      bounceCount++;
-      
-      // If velocity is too small after bounce, stop
-      if (Math.abs(currentVelocity) < 0.5) {
-        currentVelocity = 0;
-        isRunning = false;
-        elements.currentStatus.textContent = 'Stopped';
-      }
-    } else {
-      currentVelocity = 0;
-      isRunning = false;
-      elements.currentStatus.textContent = 'Stopped';
+    private saveSaves(): void {
+        localStorage.setItem('gravitySaves', JSON.stringify(this.saves));
     }
-  }
 
-  // Update displays
-  updateSimulationDisplays();
-}
+    private initElements(): void {
+        const gravitySlider = document.getElementById('gravitySlider') as HTMLInputElement;
+        const gravityValue = document.getElementById('gravityValue') as HTMLElement;
+        gravitySlider.addEventListener('input', (e) => {
+            this.state.gravity = parseFloat((e.target as HTMLInputElement).value);
+            gravityValue.textContent = this.state.gravity.toFixed(2);
+            this.updatePlanetButtons();
+        });
 
-// Update simulation-specific displays
-function updateSimulationDisplays(): void {
-  const heightInMeters = Math.max(0, currentHeight);
-  const velocityValue = currentVelocity;
-  const timeValue = currentTime;
-  
-  // Calculate energies (KE = 0.5 * m * v^2, PE = m * g * h)
-  const kineticEnergyValue = 0.5 * objectMass * velocityValue * velocityValue;
-  const potentialEnergyValue = objectMass * settings.gravity * heightInMeters;
-  const totalEnergyValue = kineticEnergyValue + potentialEnergyValue;
+        document.querySelectorAll('.planet-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const g = parseFloat((btn as HTMLElement).dataset.g || '9.81');
+                this.state.gravity = g;
+                gravitySlider.value = g.toString();
+                gravityValue.textContent = g.toFixed(2);
+                this.updatePlanetButtons();
+            });
+        });
 
-  elements.heightDisplay.textContent = heightInMeters.toFixed(2) + ' m';
-  elements.velocity.textContent = velocityValue.toFixed(2) + ' m/s';
-  elements.time.textContent = timeValue.toFixed(2) + ' s';
-  elements.bounceNumber.textContent = bounceCount.toString();
-  elements.kineticEnergy.textContent = kineticEnergyValue.toFixed(2) + ' J';
-  elements.potentialEnergy.textContent = potentialEnergyValue.toFixed(2) + ' J';
-  elements.totalEnergy.textContent = totalEnergyValue.toFixed(2) + ' J';
+        const speedSlider = document.getElementById('speedSlider') as HTMLInputElement;
+        const speedValue = document.getElementById('speedValue') as HTMLElement;
+        speedSlider.addEventListener('input', (e) => {
+            this.state.initialSpeed = parseFloat((e.target as HTMLInputElement).value);
+            speedValue.textContent = this.state.initialSpeed.toFixed(0);
+        });
 
-  // Update object position visually
-  const groundRect = elements.ground.getBoundingClientRect();
-  const objectHeight = elements.object.offsetHeight;
-  const availableHeight = groundRect.top - objectHeight;
-  const pixelPosition = availableHeight - (heightInMeters * pixelsPerMeter);
-  
-  elements.object.style.transform = `translateY(${Math.max(0, pixelPosition)}px)`;
-}
+        const angleInput = document.getElementById('angleInput') as HTMLInputElement;
+        angleInput.addEventListener('input', (e) => {
+            this.state.angle = parseFloat((e.target as HTMLInputElement).value);
+        });
 
-// Animation loop
-function animate(timestamp: number): void {
-  if (!isRunning || isPaused) {
-    if (isRunning) {
-      animationId = requestAnimationFrame(animate);
+        const dragSlider = document.getElementById('dragSlider') as HTMLInputElement;
+        const dragValue = document.getElementById('dragValue') as HTMLElement;
+        dragSlider.addEventListener('input', (e) => {
+            this.state.drag = parseFloat((e.target as HTMLInputElement).value);
+            dragValue.textContent = this.state.drag.toFixed(2);
+        });
+
+        document.getElementById('btnStart')!.addEventListener('click', () => this.startSimulation());
+        document.getElementById('btnReset')!.addEventListener('click', () => this.resetSimulation());
+        document.getElementById('btnSave')!.addEventListener('click', () => this.showSaveModal());
+        document.getElementById('btnSaveBottom')!.addEventListener('click', () => this.showSaveModal());
+        document.getElementById('btnLoad')!.addEventListener('click', () => this.showLoadModal());
+        document.getElementById('btnLoadBottom')!.addEventListener('click', () => this.showLoadModal());
+
+        const timeScaleSlider = document.getElementById('timeScaleSlider') as HTMLInputElement;
+        const simSpeedDisplay = document.getElementById('simSpeedDisplay') as HTMLElement;
+        timeScaleSlider.addEventListener('input', (e) => {
+            const val = parseInt((e.target as HTMLInputElement).value);
+            if (val === 0) { this.state.timeScale = 1; }
+            else if (val < 0) { this.state.timeScale = Math.pow(10, val / 1000); }
+            else { this.state.timeScale = Math.pow(10, val / 1000); }
+            simSpeedDisplay.textContent = 'x' + this.state.timeScale.toFixed(2);
+        });
+
+        document.getElementById('btnPauseSim')!.addEventListener('click', () => this.togglePause());
+        document.getElementById('btnCloseSim')!.addEventListener('click', () => this.closeSimulation());
+
+        const closeModal = document.getElementById('closeModal') as HTMLButtonElement;
+        const saveModal = document.getElementById('saveModal') as HTMLElement;
+        closeModal.addEventListener('click', () => { saveModal.classList.remove('active'); });
+        saveModal.addEventListener('click', (e) => { if (e.target === saveModal) saveModal.classList.remove('active'); });
+
+        let isDragging = false;
+        let dragStart = { x: 0, y: 0 };
+        this.canvas.addEventListener('mousedown', (e) => {
+            if (this.state.isRunning) return;
+            isDragging = true;
+            const rect = this.canvas.getBoundingClientRect();
+            dragStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            this.state.position = { ...dragStart };
+            this.draw();
+        });
+
+        this.canvas.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const rect = this.canvas.getBoundingClientRect();
+            const currentX = e.clientX - rect.left;
+            const currentY = e.clientY - rect.top;
+            const dx = dragStart.x - currentX;
+            const dy = dragStart.y - currentY;
+            const power = 0.15;
+            this.state.velocity = { x: dx * power, y: dy * power };
+            const speed = Math.sqrt(dx * dx + dy * dy) * power;
+            const angle = Math.atan2(-dy, dx) * 180 / Math.PI;
+            this.state.initialSpeed = Math.min(speed, 200);
+            this.state.angle = Math.max(0, Math.min(90, angle));
+            speedSlider.value = this.state.initialSpeed.toFixed(0);
+            speedValue.textContent = this.state.initialSpeed.toFixed(0);
+            angleInput.value = this.state.angle.toFixed(0);
+            this.drawTrajectory();
+        });
+
+        this.canvas.addEventListener('mouseup', () => { isDragging = false; });
     }
-    return;
-  }
 
-  const deltaTime = 0.016; // Approximate 60fps
-  simulatePhysics(deltaTime);
-  
-  if (isRunning) {
-    animationId = requestAnimationFrame(animate);
-  }
-}
-
-// Start simulation
-function startSimulation(): void {
-  // Reset state
-  currentHeight = settings.height;
-  currentVelocity = 0;
-  currentTime = 0;
-  bounceCount = 0;
-  isRunning = true;
-  isPaused = false;
-  
-  // Hide settings menu
-  elements.settingsMenu.style.display = 'none';
-  
-  // Update status
-  elements.currentStatus.textContent = 'Running';
-  
-  // Initial display update
-  updateSimulationDisplays();
-  
-  // Start animation loop
-  if (animationId) {
-    cancelAnimationFrame(animationId);
-  }
-  animationId = requestAnimationFrame(animate);
-}
-
-// Pause/Resume simulation
-function togglePause(): void {
-  if (!isRunning) return;
-  
-  isPaused = !isPaused;
-  const pauseBtnText = elements.pauseBtn.querySelector('.text') as HTMLElement;
-  const pauseBtnIcon = elements.pauseBtn.querySelector('.icon') as HTMLElement;
-  
-  if (isPaused) {
-    elements.currentStatus.textContent = 'Paused';
-    if (pauseBtnText) pauseBtnText.textContent = 'Resume';
-    if (pauseBtnIcon) pauseBtnIcon.textContent = '▶️';
-  } else {
-    elements.currentStatus.textContent = 'Running';
-    if (pauseBtnText) pauseBtnText.textContent = 'Pause';
-    if (pauseBtnIcon) pauseBtnIcon.textContent = '⏸️';
-    animate(0);
-  }
-}
-
-// Restart simulation
-function restartSimulation(): void {
-  if (animationId) {
-    cancelAnimationFrame(animationId);
-  }
-  
-  // Show settings menu
-  elements.settingsMenu.style.display = 'block';
-  elements.currentStatus.textContent = 'Ready';
-  isRunning = false;
-  isPaused = false;
-  
-  // Reset object position
-  elements.object.style.transform = 'translateY(0px)';
-  
-  // Reset displays to initial values
-  currentHeight = settings.height;
-  currentVelocity = 0;
-  currentTime = 0;
-  bounceCount = 0;
-  updateSimulationDisplays();
-}
-
-// Open settings
-function openSettings(): void {
-  if (animationId) {
-    cancelAnimationFrame(animationId);
-  }
-  
-  elements.settingsMenu.style.display = 'block';
-  elements.currentStatus.textContent = 'Ready';
-  isRunning = false;
-  isPaused = false;
-  
-  // Reset object position
-  elements.object.style.transform = 'translateY(0px)';
-  
-  // Reset displays to initial values
-  currentHeight = settings.height;
-  currentVelocity = 0;
-  currentTime = 0;
-  bounceCount = 0;
-  updateSimulationDisplays();
-}
-
-// Event listeners setup
-function setupEventListeners(): void {
-  // Gravity input change
-  elements.gravityInput.addEventListener('change', () => {
-    const value = parseFloat(elements.gravityInput.value);
-    if (value >= 0.01) {
-      settings.gravity = value;
-      updateDisplays();
+    private updatePlanetButtons(): void {
+        document.querySelectorAll('.planet-btn').forEach(btn => {
+            const g = parseFloat((btn as HTMLElement).dataset.g || '0');
+            if (Math.abs(g - this.state.gravity) < 0.01) btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
     }
-  });
 
-  // Height input change
-  elements.heightInput.addEventListener('change', () => {
-    const value = parseFloat(elements.heightInput.value);
-    if (value >= 0.1) {
-      settings.height = value;
-      currentHeight = value;
-      updateSimulationDisplays();
+    private updateDisplays(): void {
+        (document.getElementById('gravitySlider') as HTMLInputElement).value = this.state.gravity.toString();
+        document.getElementById('gravityValue')!.textContent = this.state.gravity.toFixed(2);
+        (document.getElementById('speedSlider') as HTMLInputElement).value = this.state.initialSpeed.toString();
+        document.getElementById('speedValue')!.textContent = this.state.initialSpeed.toFixed(0);
+        (document.getElementById('angleInput') as HTMLInputElement).value = this.state.angle.toString();
+        (document.getElementById('dragSlider') as HTMLInputElement).value = this.state.drag.toString();
+        document.getElementById('dragValue')!.textContent = this.state.drag.toFixed(2);
+        this.updatePlanetButtons();
     }
-  });
 
-  // Bounciness slider change
-  elements.bouncinessSlider.addEventListener('input', () => {
-    settings.bounciness = parseFloat(elements.bouncinessSlider.value);
-    updateDisplays();
-  });
+    private resizeCanvas(): void {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+        if (!this.state.isRunning) {
+            this.state.position.y = this.canvas.height - 30;
+            this.draw();
+        }
+    }
 
-  // Air resistance slider change
-  elements.airResistanceSlider.addEventListener('input', () => {
-    settings.airResistance = parseFloat(elements.airResistanceSlider.value);
-    updateDisplays();
-  });
+    private draw(): void {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillStyle = '#334155';
+        this.ctx.fillRect(0, this.canvas.height - 20, this.canvas.width, 20);
+        this.ctx.beginPath();
+        this.ctx.arc(this.state.position.x, this.state.position.y, 8, 0, Math.PI * 2);
+        this.ctx.fillStyle = '#4f46e5';
+        this.ctx.fill();
+        this.ctx.strokeStyle = '#fff';
+        this.ctx.lineWidth = 2;
+        this.ctx.stroke();
+        if (!this.state.isRunning) this.drawTrajectory();
+    }
 
-  // Time scale slider change during simulation (can be adjusted while running)
-  elements.simTimeScaleSlider.addEventListener('input', () => {
-    settings.timeScale = parseFloat(elements.simTimeScaleSlider.value);
-    updateDisplays();
-  });
+    private drawTrajectory(): void {
+        const rad = this.state.angle * Math.PI / 180;
+        let x = this.state.position.x;
+        let y = this.state.position.y;
+        let vx = Math.cos(rad) * this.state.initialSpeed;
+        let vy = -Math.sin(rad) * this.state.initialSpeed;
+        this.ctx.beginPath();
+        this.ctx.moveTo(x, y);
+        this.ctx.strokeStyle = 'rgba(79, 70, 229, 0.5)';
+        this.ctx.setLineDash([5, 5]);
+        for (let i = 0; i < 200; i++) {
+            vx *= (1 - this.state.drag);
+            vy *= (1 - this.state.drag);
+            vy += this.state.gravity * 0.016;
+            x += vx;
+            y += vy;
+            if (y > this.canvas.height - 20) break;
+            this.ctx.lineTo(x, y);
+        }
+        this.ctx.stroke();
+        this.ctx.setLineDash([]);
+    }
 
-  // Preset buttons for gravity
-  document.querySelectorAll('.preset-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const gravity = parseFloat((btn as HTMLElement).dataset.gravity || '9.8');
-      settings.gravity = gravity;
-      elements.gravityInput.value = gravity.toString();
-      updateDisplays();
-    });
-  });
+    private startSimulation(): void {
+        if (this.state.isRunning) return;
+        document.getElementById('settings-panel')!.classList.add('hidden');
+        document.getElementById('sim-controls')!.classList.remove('hidden');
+        this.state.position = { x: 50, y: this.canvas.height - 30 };
+        const rad = this.state.angle * Math.PI / 180;
+        this.state.velocity = { x: Math.cos(rad) * this.state.initialSpeed, y: -Math.sin(rad) * this.state.initialSpeed };
+        this.state.isRunning = true;
+        this.animate();
+    }
 
-  // Start button
-  elements.startBtn.addEventListener('click', startSimulation);
+    private animate(): void {
+        if (!this.state.isRunning) return;
+        const dt = 0.016 * this.state.timeScale;
+        this.state.velocity.x *= (1 - this.state.drag * dt);
+        this.state.velocity.y *= (1 - this.state.drag * dt);
+        this.state.velocity.y += this.state.gravity * dt;
+        this.state.position.x += this.state.velocity.x * dt;
+        this.state.position.y += this.state.velocity.y * dt;
+        if (this.state.position.y > this.canvas.height - 20) {
+            this.state.position.y = this.canvas.height - 20;
+            this.state.velocity.y *= -0.7;
+            if (Math.abs(this.state.velocity.y) < 1) this.state.velocity.y = 0;
+        }
+        if (this.state.position.x < 0 || this.state.position.x > this.canvas.width) {
+            this.state.velocity.x *= -0.8;
+            this.state.position.x = Math.max(0, Math.min(this.canvas.width, this.state.position.x));
+        }
+        this.draw();
+        this.animationId = requestAnimationFrame(() => this.animate());
+    }
 
-  // Save button
-  elements.saveBtn.addEventListener('click', saveSettings);
+    private togglePause(): void {
+        const btn = document.getElementById('btnPauseSim')!;
+        if (this.state.isRunning) {
+            this.state.isRunning = false;
+            if (this.animationId) { cancelAnimationFrame(this.animationId); this.animationId = null; }
+            btn.textContent = 'Resume';
+        } else {
+            this.state.isRunning = true;
+            this.animate();
+            btn.textContent = 'Pause';
+        }
+    }
 
-  // Load button
-  elements.loadBtn.addEventListener('click', showLoadMenu);
+    private closeSimulation(): void {
+        this.state.isRunning = false;
+        if (this.animationId) { cancelAnimationFrame(this.animationId); this.animationId = null; }
+        document.getElementById('sim-controls')!.classList.add('hidden');
+        document.getElementById('settings-panel')!.classList.remove('hidden');
+        this.resetSimulation();
+    }
 
-  // Pause button
-  elements.pauseBtn.addEventListener('click', togglePause);
+    private resetSimulation(): void {
+        this.state.position = { x: 50, y: this.canvas.height - 30 };
+        this.state.velocity = { x: 0, y: 0 };
+        this.state.isRunning = false;
+        if (this.animationId) { cancelAnimationFrame(this.animationId); this.animationId = null; }
+        document.getElementById('btnPauseSim')!.textContent = 'Pause';
+        this.draw();
+    }
 
-  // Again button
-  elements.againBtn.addEventListener('click', restartSimulation);
+    private showSaveModal(): void {
+        const modal = document.getElementById('saveModal')!;
+        const name = prompt('Enter a name for this save:');
+        if (!name) return;
+        const config: SavedConfig = { name, timestamp: Date.now(), gravity: this.state.gravity, initialSpeed: this.state.initialSpeed, angle: this.state.angle, drag: this.state.drag };
+        this.saves.push(config);
+        this.saveSaves();
+        alert('Settings saved as "' + name + '"!');
+        modal.classList.remove('active');
+    }
 
-  // Settings button
-  elements.settingsBtn.addEventListener('click', openSettings);
+    private showLoadModal(): void {
+        const modal = document.getElementById('saveModal')!;
+        const container = document.getElementById('saveListContainer')!;
+        if (this.saves.length === 0) {
+            container.innerHTML = '<p style="text-align:center;color:var(--text-muted)">No saved settings found.</p>';
+        } else {
+            container.innerHTML = '';
+            const sorted = [...this.saves].sort((a, b) => b.timestamp - a.timestamp);
+            sorted.forEach((save, idx) => {
+                const date = new Date(save.timestamp).toLocaleString();
+                const item = document.createElement('div');
+                item.className = 'save-item';
+                item.innerHTML = '<div class="save-info"><h4>' + save.name + '</h4><p>Saved: ' + date + '</p><p style="font-size:0.75rem;opacity:0.7">Gravity:' + save.gravity.toFixed(2) + '|Speed:' + save.initialSpeed.toFixed(0) + '|Angle:' + save.angle.toFixed(0) + '°|Drag:' + save.drag.toFixed(2) + '</p></div><div class="save-actions"><button class="btn btn-primary" data-idx="' + idx + '">Load</button><button class="btn btn-danger" data-del="' + idx + '">Delete</button></div>';
+                container.appendChild(item);
+            });
+            container.querySelectorAll('[data-idx]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const idx = parseInt((btn as HTMLElement).dataset.idx || '0');
+                    const sorted = [...this.saves].sort((a, b) => b.timestamp - a.timestamp);
+                    this.loadConfig(sorted[idx]);
+                    modal.classList.remove('active');
+                });
+            });
+            container.querySelectorAll('[data-del]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const idx = parseInt((btn as HTMLElement).dataset.del || '0');
+                    const sorted = [...this.saves].sort((a, b) => b.timestamp - a.timestamp);
+                    const toDel = sorted[idx];
+                    if (confirm('Delete "' + toDel.name + '"?')) {
+                        this.saves = this.saves.filter(s => s.timestamp !== toDel.timestamp);
+                        this.saveSaves();
+                        this.showLoadModal();
+                    }
+                });
+            });
+        }
+        modal.classList.add('active');
+    }
 
-  // Handle Enter key for number inputs
-  document.querySelectorAll('input[type="number"]').forEach(input => {
-    input.addEventListener('keydown', ((e: Event) => {
-      const ke = e as KeyboardEvent;
-      if (ke.key === 'Enter') {
-        (input as HTMLInputElement).blur();
-        elements.inputFocusNotice.style.opacity = '0';
-      }
-    }) as EventListener);
-
-    input.addEventListener('focus', () => {
-      elements.inputFocusNotice.style.opacity = '1';
-    });
-
-    input.addEventListener('blur', () => {
-      elements.inputFocusNotice.style.opacity = '0';
-    });
-  });
+    private loadConfig(config: SavedConfig): void {
+        this.state.gravity = config.gravity;
+        this.state.initialSpeed = config.initialSpeed;
+        this.state.angle = config.angle;
+        this.state.drag = config.drag;
+        this.updateDisplays();
+        this.draw();
+    }
 }
 
-// Initialize application
-function init(): void {
-  initializeElements();
-  updateDisplays();
-  setupEventListeners();
-  
-  // Set initial object position
-  currentHeight = settings.height;
-  updateSimulationDisplays();
-}
-
-// Run initialization when DOM is loaded
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
-}
+window.addEventListener('DOMContentLoaded', () => { new GravitySimulator(); });
