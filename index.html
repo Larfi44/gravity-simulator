@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gravity Simulator</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="settings-panel">
+      <h2 id="settings-title">⚡ Gravity Simulator</h2>
+
+      <div class="controls-grid">
+        <!-- Left: Gravity -->
+        <div class="control-group">
+          <label id="gravityLabel">Gravity Acceleration (m/s²)</label>
+          <input
+            type="number"
+            id="gravityInput"
+            value="9.81"
+            min="0"
+            max="9999999999999999999999999999999"
+            step="any"
+          />
+          <div class="planet-presets">
+            <button class="planet-btn active" data-g="9.81">Earth</button>
+            <button class="planet-btn" data-g="1.62">Moon</button>
+            <button class="planet-btn" data-g="3.71">Mars</button>
+            <button class="planet-btn" data-g="8.87">Venus</button>
+            <button class="planet-btn" data-g="24.79">Jupiter</button>
+            <button class="planet-btn" data-g="10.44">Saturn</button>
+            <button class="planet-btn" data-g="0.62">Pluto</button>
+            <button class="planet-btn" data-g="274">Sun</button>
+          </div>
+        </div>
+
+        <!-- Right: Speed + Angle -->
+        <div class="control-group">
+          <label id="speedLabel">Initial Speed (m/s)</label>
+          <input
+            type="number"
+            id="speedInput"
+            value="0"
+            min="0"
+            max="99999999999999999999999999"
+            step="any"
+          />
+          <div style="margin-top: 10px">
+            <label style="font-size: 0.8rem" id="angleLabel"
+              >Launch Angle (deg)</label
+            >
+            <input type="number" id="angleInput" value="0" min="0" max="360" />
+          </div>
+        </div>
+
+        <!-- Split row: Height | Air Resistance -->
+        <div class="split-row">
+          <div class="control-group">
+            <label id="heightLabel">Falling Height (m)</label>
+            <input
+              type="number"
+              id="heightInput"
+              value="100"
+              min="0.1"
+              max="99999999999999999999999999999999"
+              step="any"
+            />
+          </div>
+          <div class="control-group">
+            <label id="dragLabel">Air Resistance (Drag)</label>
+            <input
+              type="range"
+              id="dragSlider"
+              min="0"
+              max="1"
+              step="0.01"
+              value="0"
+            />
+          </div>
+        </div>
+
+        <!-- Split row: Friction Coefficient | Bounce -->
+        <div class="split-row">
+          <div class="control-group">
+            <label id="frictionLabel">Friction Coefficient</label>
+            <input
+              type="range"
+              id="frictionSlider"
+              min="0"
+              max="1"
+              step="0.01"
+              value="0.5"
+            />
+          </div>
+          <div class="control-group">
+            <label id="bounceLabel">Bounce (Restitution)</label>
+            <input
+              type="range"
+              id="bounceSlider"
+              min="0"
+              max="1"
+              step="0.01"
+              value="0.7"
+            />
+          </div>
+        </div>
+
+        <!-- Full width: Data Management -->
+        <div class="control-group full-width">
+          <label id="dataLabel">💾 Data Management</label>
+          <div class="action-row">
+            <button class="btn btn-secondary" id="btnSave">
+              💾 Save Settings
+            </button>
+            <button class="btn btn-secondary" id="btnLoad">
+              📂 Load Settings
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div
+        style="
+          margin-top: 20px;
+          border-top: 1px solid rgba(255, 255, 255, 0.06);
+        "
+      >
+        <div class="action-row">
+          <button class="btn btn-primary" id="btnStart">
+            ▶ Start Simulation
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="sim-controls" class="hidden">
+      <div class="sim-stat" id="simHeightLabel">
+        Height: <span id="simHeightDisplay">0.0</span>m
+      </div>
+      <div class="sim-stat" id="simTimeLabel">
+        Time: <span id="simTimeDisplay">0.00</span>s
+      </div>
+      <div class="sim-stat" id="simSpeedLabel">
+        Speed: <span id="simSpeedDisplay">x1.00</span>
+      </div>
+      <div
+        style="
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          gap: 6px;
+        "
+      >
+        <input
+          type="range"
+          id="timeScaleSlider"
+          min="-200"
+          max="200"
+          value="0"
+          style="width: 100px"
+        />
+        <button
+          class="btn btn-secondary btn-small"
+          id="btnResetSpeed"
+          style="padding: 4px 8px; font-size: 0.7rem"
+        >
+          x1
+        </button>
+      </div>
+      <button
+        class="btn btn-primary btn-small"
+        id="btnPauseSim"
+        style="min-width: 70px"
+      >
+        Resume
+      </button>
+      <button class="btn btn-secondary btn-small" id="btnCloseSim">
+        ✕ Close
+      </button>
+    </div>
+
+    <canvas id="simCanvas"></canvas>
+
+    <!-- Save Name Modal -->
+    <div class="modal-overlay" id="saveNameModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="saveNameTitle">💾 Save Configuration</h3>
+          <button
+            class="btn btn-danger btn-small"
+            id="closeSaveNameModal"
+            style="padding: 4px 10px"
+          >
+            ✕
+          </button>
+        </div>
+        <div class="modal-body">
+          <label for="saveNameInput" id="saveNamePrompt"
+            >Enter a name for this save:</label
+          >
+          <input
+            type="text"
+            id="saveNameInput"
+            placeholder="My Settings"
+            autocomplete="off"
+          />
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="cancelSaveName">Cancel</button>
+          <button class="btn btn-primary" id="confirmSaveName">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Saved Configurations Modal -->
+    <div class="modal-overlay" id="saveModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="loadTitle">📂 Saved Configurations</h3>
+          <button
+            class="btn btn-danger btn-small"
+            id="closeModal"
+            style="padding: 4px 10px"
+          >
+            ✕
+          </button>
+        </div>
+        <div id="saveListContainer" class="save-list">
+          <p
+            style="text-align: center; color: var(--text-muted); padding: 20px"
+          >
+            No saved settings found.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
