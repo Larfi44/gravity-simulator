@@ -191,9 +191,9 @@ class GravitySimulator {
   private t: LangDict;
 
   private readonly BALL_R = 12;
-  private readonly TOP = 12;
+  private readonly TOP = 11;
   private BOTTOM(): number {
-    return this.canvas.height - this.BALL_R;
+    return this.canvas.height - 14;
   }
   private RANGE(): number {
     return this.BOTTOM() - this.TOP;

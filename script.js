@@ -156,7 +156,7 @@ function applyTranslations() {
 }
 class GravitySimulator {
     BOTTOM() {
-        return this.canvas.height - this.BALL_R;
+        return this.canvas.height - 14;
     }
     RANGE() {
         return this.BOTTOM() - this.TOP;
@@ -166,7 +166,7 @@ class GravitySimulator {
         this.saves = [];
         this.pendingSaveName = null;
         this.BALL_R = 12;
-        this.TOP = 12;
+        this.TOP = 11;
         this.canvas = document.getElementById('simCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.state = {

@@ -55,6 +55,18 @@ canvas {
   max-width: 640px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   z-index: 10;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+}
+#settings-panel::-webkit-scrollbar {
+  width: 6px;
+}
+#settings-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+#settings-panel::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.3);
+  border-radius: 3px;
 }
 
 .hidden {
@@ -438,4 +450,114 @@ input[type='range']::-moz-range-thumb {
 .save-list::-webkit-scrollbar-thumb {
   background: rgba(99, 102, 241, 0.3);
   border-radius: 3px;
+}
+
+/* Mobile responsive - small screens (width or height) */
+@media (max-width: 350px), (max-height: 350px) {
+  html,
+  body {
+    font-size: 11px;
+  }
+
+  #settings-panel {
+    top: 5px;
+    padding: 10px;
+    width: 96%;
+    max-width: 100%;
+    border-radius: 10px;
+  }
+
+  #settings-panel h2 {
+    font-size: 1rem;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+  }
+
+  .controls-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .control-group {
+    padding: 10px;
+  }
+
+  .control-group.full-width,
+  .split-row {
+    grid-column: span 1;
+  }
+
+  .split-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .planet-presets {
+    gap: 4px;
+    margin-top: 6px;
+  }
+
+  .planet-btn {
+    min-width: 36px;
+    padding: 4px 2px;
+    font-size: 0.65rem;
+  }
+
+  input[type='number'] {
+    padding: 6px 8px;
+    font-size: 0.85rem;
+  }
+
+  input[type='range'] {
+    height: 4px;
+    margin: 4px 0 2px;
+  }
+  input[type='range']::-webkit-slider-thumb {
+    width: 14px;
+    height: 14px;
+  }
+
+  .action-row {
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .btn {
+    padding: 8px 6px;
+    font-size: 0.7rem;
+  }
+
+  #sim-controls {
+    left: 5px;
+    padding: 8px 6px;
+    gap: 5px;
+  }
+
+  .sim-stat {
+    font-size: 0.75rem;
+  }
+
+  .modal-content {
+    padding: 16px;
+    max-width: 95%;
+  }
+
+  .save-item {
+    padding: 10px 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .save-info h4 {
+    font-size: 0.85rem;
+  }
+
+  .save-info p {
+    font-size: 0.7rem;
+  }
+
+  .save-actions {
+    align-self: flex-end;
+  }
 }
