@@ -38,6 +38,8 @@ const LANG_DATA: { en: LangDict; ru: LangDict } = {
     'friction-label': 'Friction Coefficient',
     'bounce-label': 'Bounce (Restitution)',
     'data-label': '\uD83D\uDCBE Data Management',
+    'app-settings-label': '\u2699\uFE0F App',
+    'app-settings-btn': '\u2699\uFE0F Settings',
     'save-btn': '\uD83D\uDCBE Save Settings',
     'load-btn': '\uD83D\uDCC2 Load Settings',
     'start-btn': '\u25B6 Start Simulation',
@@ -66,6 +68,12 @@ const LANG_DATA: { en: LangDict; ru: LangDict } = {
     sun: 'Sun',
     m: 'm',
     s: 's',
+    'made-by': 'Created by ',
+    'footer-title': 'Yarik Studio',
+    'settings-modal-title': '\u2699\uFE0F Settings',
+    'lang-label': 'Language',
+    'download-android': '\uD83D\uDCF1 Download for Android',
+    donate: 'Donate',
   },
   ru: {
     'settings-title': '\u26A1 Настройки симуляции',
@@ -77,6 +85,8 @@ const LANG_DATA: { en: LangDict; ru: LangDict } = {
     'friction-label': 'Коэффициент трения',
     'bounce-label': 'Отскок (упругость)',
     'data-label': '\uD83D\uDCBE Управление данными',
+    'app-settings-label': '\u2699\uFE0F Приложение',
+    'app-settings-btn': '\u2699\uFE0F Настройки',
     'save-btn': '\uD83D\uDCBE Сохранить настройки',
     'load-btn': '\uD83D\uDCC2 Загрузить настройки',
     'start-btn': '\u25B6 Запустить симуляцию',
@@ -95,6 +105,12 @@ const LANG_DATA: { en: LangDict; ru: LangDict } = {
     'load-empty': 'Сохранений не найдено.',
     load: 'Загрузить',
     delete: 'Удалить',
+    'made-by': 'Создано ',
+    'footer-title': 'Yarik Studio',
+    'settings-modal-title': '\u2699\uFE0F Настройки',
+    'lang-label': 'Язык',
+    'download-android': '\uD83D\uDCF1 Скачать для Android',
+    donate: 'Поддержать',
     earth: 'Земля',
     moon: 'Луна',
     mars: 'Марс',
@@ -108,8 +124,14 @@ const LANG_DATA: { en: LangDict; ru: LangDict } = {
   },
 };
 
+// Detect if running inside Tauri
+const isTauri =
+  typeof window !== 'undefined' && (window as any).__TAURI__ !== undefined;
+
 function getLang(): LangDict {
   const b = navigator.language || (navigator as any).userLanguage || 'en';
+  const stored = localStorage.getItem('gravityLang');
+  if (stored === 'en' || stored === 'ru') return LANG_DATA[stored];
   return LANG_DATA[b.startsWith('ru') ? 'ru' : 'en'];
 }
 
@@ -125,6 +147,8 @@ function applyTranslations(): void {
     frictionLabel: 'friction-label',
     bounceLabel: 'bounce-label',
     dataLabel: 'data-label',
+    appSettingsLabel: 'app-settings-label',
+    btnAppSettings: 'app-settings-btn',
     btnSave: 'save-btn',
     btnLoad: 'load-btn',
     btnStart: 'start-btn',
@@ -137,6 +161,12 @@ function applyTranslations(): void {
     cancelSaveName: 'save-cancel',
     confirmSaveName: 'save-confirm',
     loadTitle: 'load-title',
+    appSettingsTitle: 'settings-modal-title',
+    langLabel: 'lang-label',
+    btnDownloadAndroid: 'download-android',
+    donateText: 'donate',
+    footerLabel: 'made-by',
+    footerLink: 'footer-title',
   };
   for (const [id, key] of Object.entries(map)) {
     const el = document.getElementById(id);
@@ -179,6 +209,26 @@ function applyTranslations(): void {
     const k = pk[g || ''];
     if (k && t[k]) btn.textContent = t[k];
   });
+
+  // Hide download button in Tauri app
+  const downloadBtn = document.getElementById('btnDownloadAndroid');
+  if (downloadBtn) {
+    downloadBtn.style.display = isTauri ? 'none' : '';
+  }
+}
+
+function openExternal(url: string): void {
+  if (isTauri) {
+    // In Tauri, use the shell API to open in default browser
+    try {
+      // @ts-ignore
+      window.__TAURI__.shell.open(url);
+    } catch {
+      window.open(url, '_blank');
+    }
+  } else {
+    window.open(url, '_blank');
+  }
 }
 
 class GravitySimulator {
@@ -259,7 +309,6 @@ class GravitySimulator {
   }
 
   private updateSimStats(): void {
-    const topMargin = 30;
     const fraction = (this.BOTTOM() - this.state.position.y) / this.RANGE();
     const h = Math.max(0, fraction * this.state.spawnHeight);
     document.getElementById('simHeightDisplay')!.textContent = h.toFixed(1);
@@ -441,6 +490,68 @@ class GravitySimulator {
       }
     });
 
+    // App Settings Modal
+    const appSettingsModal = document.getElementById('appSettingsModal')!;
+    document.getElementById('btnAppSettings')!.addEventListener('click', () => {
+      appSettingsModal.classList.add('active');
+    });
+    document
+      .getElementById('closeAppSettings')!
+      .addEventListener('click', () => {
+        appSettingsModal.classList.remove('active');
+      });
+    appSettingsModal.addEventListener('click', (e) => {
+      if (e.target === appSettingsModal)
+        appSettingsModal.classList.remove('active');
+    });
+
+    // Language toggle buttons — reapply translations without closing modal
+    const currentLang =
+      localStorage.getItem('gravityLang') ||
+      (navigator.language.startsWith('ru') ? 'ru' : 'en');
+    document.querySelectorAll('#langToggle button').forEach((btn) => {
+      const el = btn as HTMLElement;
+      const lang = el.dataset.lang;
+      if (lang === currentLang) {
+        el.style.background = 'rgba(99, 102, 241, 0.3)';
+      } else {
+        el.style.background = 'rgba(0, 0, 0, 0.35)';
+      }
+      btn.addEventListener('click', () => {
+        if (lang && lang !== localStorage.getItem('gravityLang')) {
+          localStorage.setItem('gravityLang', lang);
+          // Reapply translations without reloading
+          applyTranslations();
+          // Update button highlights
+          document.querySelectorAll('#langToggle button').forEach((b) => {
+            const be = b as HTMLElement;
+            if (be.dataset.lang === lang) {
+              be.style.background = 'rgba(99, 102, 241, 0.3)';
+            } else {
+              be.style.background = 'rgba(0, 0, 0, 0.35)';
+            }
+          });
+        }
+      });
+    });
+
+    // External links — open in default browser in Tauri
+    document.querySelectorAll('a[target="_blank"]').forEach((link) => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const href = (link as HTMLAnchorElement).href;
+        openExternal(href);
+      });
+    });
+
+    // Download for Android
+    document
+      .getElementById('btnDownloadAndroid')!
+      .addEventListener('click', (e) => {
+        e.preventDefault();
+        openExternal('downloads/gravity-simulator.apk');
+      });
+
     document.addEventListener('keydown', (e) => {
       if (
         e.target instanceof HTMLInputElement ||
@@ -581,7 +692,6 @@ class GravitySimulator {
     this.state.position.x += this.state.velocity.x * dt;
     this.state.position.y += this.state.velocity.y * dt;
     this.state.elapsedTime += 0.016 * this.state.timeScale;
-    // Ground
     if (this.state.position.y > this.BOTTOM()) {
       this.state.position.y = this.BOTTOM();
       if (Math.abs(this.state.velocity.y) > 2)
@@ -590,7 +700,6 @@ class GravitySimulator {
       this.state.velocity.x *= 1 - this.state.friction * 0.5;
       if (Math.abs(this.state.velocity.x) < 5) this.state.velocity.x = 0;
     }
-    // Walls
     if (
       this.state.position.x < 0 ||
       this.state.position.x > this.canvas.width
