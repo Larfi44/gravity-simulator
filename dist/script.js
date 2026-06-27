@@ -1,3 +1,4 @@
+"use strict";
 const LANG_DATA = {
     en: {
         'settings-title': '\u26A1 Gravity Simulator',
@@ -29,6 +30,7 @@ const LANG_DATA = {
         'load-empty': 'No saved settings found.',
         load: 'Load',
         delete: 'Delete',
+        'delete-confirm': 'Delete "{name}"?',
         earth: 'Earth',
         moon: 'Moon',
         mars: 'Mars',
@@ -76,6 +78,7 @@ const LANG_DATA = {
         'load-empty': 'Сохранений не найдено.',
         load: 'Загрузить',
         delete: 'Удалить',
+        'delete-confirm': 'Удалить "{name}"?',
         'made-by': 'Создано ',
         'footer-title': 'Yarik Studio',
         'settings-modal-title': '\u2699\uFE0F Настройки',
@@ -195,7 +198,7 @@ function openExternal(url) {
             // @ts-ignore
             window.__TAURI__.shell.open(url);
         }
-        catch {
+        catch (_a) {
             window.open(url, '_blank');
         }
     }
@@ -250,19 +253,22 @@ class GravitySimulator {
         if (saved) {
             try {
                 this.saves = JSON.parse(saved);
-                this.saves = this.saves.map((s) => ({
-                    name: s.name,
-                    timestamp: s.timestamp,
-                    gravity: s.gravity ?? 9.81,
-                    initialSpeed: s.initialSpeed ?? 0,
-                    angle: s.angle ?? 0,
-                    drag: s.drag ?? 0,
-                    friction: s.friction ?? 0.5,
-                    bounce: s.bounce ?? 0.7,
-                    spawnHeight: s.spawnHeight ?? 100,
-                }));
+                this.saves = this.saves.map((s) => {
+                    var _a, _b, _c, _d, _e, _f, _g;
+                    return ({
+                        name: s.name,
+                        timestamp: s.timestamp,
+                        gravity: (_a = s.gravity) !== null && _a !== void 0 ? _a : 9.81,
+                        initialSpeed: (_b = s.initialSpeed) !== null && _b !== void 0 ? _b : 0,
+                        angle: (_c = s.angle) !== null && _c !== void 0 ? _c : 0,
+                        drag: (_d = s.drag) !== null && _d !== void 0 ? _d : 0,
+                        friction: (_e = s.friction) !== null && _e !== void 0 ? _e : 0.5,
+                        bounce: (_f = s.bounce) !== null && _f !== void 0 ? _f : 0.7,
+                        spawnHeight: (_g = s.spawnHeight) !== null && _g !== void 0 ? _g : 100,
+                    });
+                });
             }
-            catch {
+            catch (_a) {
                 this.saves = [];
             }
         }
@@ -761,7 +767,41 @@ class GravitySimulator {
         this.draw();
     }
 }
-applyTranslations();
-window.addEventListener('DOMContentLoaded', () => {
-    new GravitySimulator();
+function initApp() {
+    try {
+        new GravitySimulator();
+    }
+    catch (e) {
+        console.error('GravitySimulator init failed:', e);
+    }
+}
+function safeApplyTranslations() {
+    try {
+        applyTranslations();
+    }
+    catch (e) {
+        console.error('applyTranslations failed:', e);
+    }
+}
+function boot() {
+    safeApplyTranslations();
+    initApp();
+}
+if (document.readyState === 'complete' ||
+    document.readyState === 'interactive') {
+    // DOM already loaded (common in Tauri WebView), run immediately
+    boot();
+}
+else {
+    // DOM still loading, wait for event
+    window.addEventListener('DOMContentLoaded', boot);
+}
+// Fallback: if DOMContentLoaded already fired, use load event
+window.addEventListener('load', function () {
+    // Only run if boot hasn't run yet (e.g., if readyState was loading when script ran
+    // but DOMContentLoaded had already fired silently in WebView)
+    if (!window.__gravityBooted) {
+        window.__gravityBooted = true;
+        boot();
+    }
 });

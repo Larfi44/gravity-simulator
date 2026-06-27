@@ -241,6 +241,8 @@ input[type='range']::-moz-range-thumb {
   text-transform: uppercase;
   font-size: 0.8rem;
   letter-spacing: 0.5px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .btn-primary {
@@ -477,8 +479,33 @@ input[type='range']::-moz-range-thumb {
   font-size: 1.1rem;
 }
 
+/* Narrow sim-controls for screens under 500px */
+@media (max-width: 500px) {
+  #sim-controls {
+    left: 5px;
+    padding: 8px 6px;
+    gap: 5px;
+    max-width: 140px;
+    border-radius: 10px;
+  }
+
+  #sim-controls .sim-stat {
+    font-size: 0.7rem;
+  }
+
+  #sim-controls input[type='range'] {
+    width: 70px !important;
+  }
+
+  #sim-controls .btn-small {
+    padding: 4px 8px;
+    font-size: 0.65rem;
+    min-width: 55px;
+  }
+}
+
 /* Mobile responsive - small screens (width or height) */
-@media (max-width: 350px), (max-height: 350px) {
+@media (max-width: 400px), (max-height: 400px) {
   html,
   body {
     font-size: 11px;
@@ -554,12 +581,23 @@ input[type='range']::-moz-range-thumb {
 
   #sim-controls {
     left: 5px;
-    padding: 8px 6px;
-    gap: 5px;
+    padding: 6px 4px;
+    gap: 4px;
+    max-width: 160px;
   }
 
   .sim-stat {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
+  }
+
+  #sim-controls input[type='range'] {
+    width: 60px !important;
+  }
+
+  #sim-controls .btn-small {
+    padding: 4px 6px;
+    font-size: 0.6rem;
+    min-width: 50px;
   }
 
   .modal-content {

@@ -6,13 +6,19 @@ set -e
 
 echo "---- Building Gravity Simulator for Android ----"
 
+# Compile TypeScript first
+echo "[0/4] Compiling TypeScript..."
+npx tsc --project tsconfig.json || { echo "Error: TypeScript compilation failed"; exit 1; }
+echo "       TypeScript compiled successfully"
+
+
 if ! command -v cargo &> /dev/null; then
     echo "Error: Rust/Cargo is required. Install from https://rustup.rs"
     exit 1
 fi
 
 # Clean
-echo "[1/3] Cleaning..."
+echo "[1/4] Cleaning..."
 rm -rf src-tauri/target dist /tmp/gravity-build-*
 
 mkdir -p dist
@@ -24,21 +30,27 @@ if ! command -v cargo-tauri &> /dev/null; then
     echo "Installing Tauri CLI..."
     cargo install tauri-cli --version "^2"
 else
-    echo "[2/3] Tauri CLI ready"
+    echo "[2/4] Tauri CLI ready"
 fi
 
 # Build APK (arm64 only to save space)
-echo "[3/3] Building APK (arm64, debug - auto-signed)..."
-ANDROID_ABIS=arm64-v8a cargo tauri android build --apk --debug
+echo "[3/4] Building APK (arm64, release - smaller & faster)..."
+ANDROID_ABIS=arm64-v8a cargo tauri android build --apk
 
 echo ""
 echo "---- Copying APK ----"
 
-# Copy auto-signed debug APK (arm64 only)
+# Copy release APK (arm64 only)
 echo "[4/4] Copying APK..."
 mkdir -p downloads
-cp src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk \
-   downloads/gravity-simulator.apk 2>/dev/null && \
-   ls -lh downloads/gravity-simulator.apk && \
-   echo "APK ready at downloads/gravity-simulator.apk" || \
-   echo "Error: APK not found"
+if [ -f src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk ]; then
+  cp src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk \
+     downloads/gravity-simulator.apk
+elif [ -f src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk ]; then
+  cp src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk \
+     downloads/gravity-simulator.apk
+else
+  echo "Error: APK not found"
+  exit 1
+fi
+ls -lh downloads/gravity-simulator.apk && echo "APK ready at downloads/gravity-simulator.apk"

@@ -58,6 +58,7 @@ const LANG_DATA: { en: LangDict; ru: LangDict } = {
     'load-empty': 'No saved settings found.',
     load: 'Load',
     delete: 'Delete',
+    'delete-confirm': 'Delete "{name}"?',
     earth: 'Earth',
     moon: 'Moon',
     mars: 'Mars',
@@ -105,6 +106,7 @@ const LANG_DATA: { en: LangDict; ru: LangDict } = {
     'load-empty': 'Сохранений не найдено.',
     load: 'Загрузить',
     delete: 'Удалить',
+    'delete-confirm': 'Удалить "{name}"?',
     'made-by': 'Создано ',
     'footer-title': 'Yarik Studio',
     'settings-modal-title': '\u2699\uFE0F Настройки',
@@ -856,7 +858,43 @@ class GravitySimulator {
   }
 }
 
-applyTranslations();
-window.addEventListener('DOMContentLoaded', () => {
-  new GravitySimulator();
+function initApp() {
+  try {
+    new GravitySimulator();
+  } catch (e) {
+    console.error('GravitySimulator init failed:', e);
+  }
+}
+
+function safeApplyTranslations() {
+  try {
+    applyTranslations();
+  } catch (e) {
+    console.error('applyTranslations failed:', e);
+  }
+}
+
+function boot() {
+  safeApplyTranslations();
+  initApp();
+}
+
+if (
+  document.readyState === 'complete' ||
+  document.readyState === 'interactive'
+) {
+  // DOM already loaded (common in Tauri WebView), run immediately
+  boot();
+} else {
+  // DOM still loading, wait for event
+  window.addEventListener('DOMContentLoaded', boot);
+}
+// Fallback: if DOMContentLoaded already fired, use load event
+window.addEventListener('load', function () {
+  // Only run if boot hasn't run yet (e.g., if readyState was loading when script ran
+  // but DOMContentLoaded had already fired silently in WebView)
+  if (!(window as any).__gravityBooted) {
+    (window as any).__gravityBooted = true;
+    boot();
+  }
 });
