@@ -1,0 +1,23 @@
+# Android APK output
+*.apk
+*.aab
+
+# Rust build artifacts
+src-tauri/target/
+
+# Android build outputs
+src-tauri/gen/android/app/build/
+src-tauri/gen/android/build/
+
+# Gradle
+src-tauri/gen/android/.gradle/
+src-tauri/gen/android/buildSrc/.gradle/
+src-tauri/gen/android/buildSrc/build/
+src-tauri/gen/android/local.properties
+src-tauri/gen/android/gradle/wrapper/gradle-wrapper.jar
+
+# Node
+node_modules/
+
+# Frontend dist (built by copy:frontend)
+dist/

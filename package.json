@@ -1,0 +1,18 @@
+{
+  "name": "gravity-simulator",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Gravity Simulator - Android app built with Tauri",
+  "scripts": {
+    "build:android": "bash build-android.sh",
+    "build:android:quick": "npm run copy:frontend && npx tauri android build --apk",
+    "build:android:debug": "npm run copy:frontend && npx tauri android build --apk --debug",
+    "copy:frontend": "node -e \"require('fs').existsSync('dist') || require('fs').mkdirSync('dist'); require('fs').cpSync('index.html','dist/index.html'); require('fs').cpSync('style.css','dist/style.css'); require('fs').cpSync('script.js','dist/script.js'); require('fs').cpSync('lang.json','dist/lang.json'); console.log('Frontend copied to dist/');\"",
+    "gen:icons": "python3 generate-icons.py",
+    "tauri": "npx tauri",
+    "icon": "npx tauri icon"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.11.3"
+  }
+}
