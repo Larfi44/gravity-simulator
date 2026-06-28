@@ -214,35 +214,45 @@ fi
 
 if [[ "$BUILD_TYPE" == "debug" ]]; then
   npx tauri android build --apk --debug $TARGET_FLAG
-  APK_DIR="src-tauri/gen/android/app/build/outputs/apk/debug"
+  APK_DIR="src-tauri/gen/android/app/build/outputs/apk/universal/debug"
 else
   npx tauri android build --apk $TARGET_FLAG
-  APK_DIR="src-tauri/gen/android/app/build/outputs/apk/release"
+  APK_DIR="src-tauri/gen/android/app/build/outputs/apk/universal/release"
 fi
 
 echo ""
-if [[ -d "$APK_DIR" ]]; then
-  APK_FILE=$(ls -1t "$APK_DIR"/*.apk 2>/dev/null | head -1)
-  if [[ -n "$APK_FILE" ]]; then
-    FILESIZE=$(stat -f%z "$APK_FILE" 2>/dev/null | awk '{printf "%.1f MB", $1/1048576}' || \
-               stat -c%s "$APK_FILE" 2>/dev/null | awk '{printf "%.1f MB", $1/1048576}')
-    ok "✅ Build successful!"
-    echo ""
-    echo -e "   ${CYAN}APK:${NC}  $APK_FILE"
-    echo -e "   ${CYAN}Size:${NC} $FILESIZE"
-    echo -e "   ${CYAN}Type:${NC} $BUILD_TYPE"
-    if [[ "$BUILD_TYPE" == "release" ]]; then
-      echo -e "   ${YELLOW}Note:${NC} Release APK is unsigned. For testing, use debug build instead:"
-      echo -e "         ${CYAN}./build-android.sh --debug${NC}"
-      echo -e "   ${YELLOW}      Or sign with:${NC} jarsigner -keystore my.keystore \"$APK_FILE\" alias_name"
-    fi
-    echo ""
-  else
-    warn "APK directory exists but no .apk found: $APK_DIR"
-    info "Check build output above for any errors."
+APK_FILE=$(find "$APK_DIR" -name '*.apk' 2>/dev/null | head -1)
+if [[ -z "$APK_FILE" ]]; then
+  # Fallback: search all apk output dirs
+  APK_FILE=$(find src-tauri/gen/android/app/build/outputs/apk -name '*.apk' 2>/dev/null | head -1)
+fi
+
+if [[ -n "$APK_FILE" ]]; then
+  FILESIZE=$(stat -f%z "$APK_FILE" 2>/dev/null | awk '{printf "%.1f MB", $1/1048576}' || \
+             stat -c%s "$APK_FILE" 2>/dev/null | awk '{printf "%.1f MB", $1/1048576}')
+  ok "✅ Build successful!"
+  echo ""
+  echo -e "   ${CYAN}APK:${NC}  $APK_FILE"
+  echo -e "   ${CYAN}Size:${NC} $FILESIZE"
+  echo -e "   ${CYAN}Type:${NC} $BUILD_TYPE"
+  echo ""
+
+  # Copy APK to downloads/ for easy access
+  DOWNLOAD_DIR="downloads"
+  mkdir -p "$DOWNLOAD_DIR"
+  APK_BASENAME="gravity-simulator-${BUILD_TYPE}.apk"
+  cp "$APK_FILE" "$DOWNLOAD_DIR/$APK_BASENAME"
+  ok "Copied to: $DOWNLOAD_DIR/$APK_BASENAME"
+  echo ""
+
+  if [[ "$BUILD_TYPE" == "release" ]]; then
+    echo -e "   ${YELLOW}Note:${NC} Release APK is unsigned. For testing, use debug build instead:"
+    echo -e "         ${CYAN}./build-android.sh --debug${NC}"
+    echo -e "   ${YELLOW}      Or sign with:${NC} jarsigner -keystore my.keystore \"$DOWNLOAD_DIR/$APK_BASENAME\" alias_name"
   fi
+  echo ""
 else
-  warn "APK output directory not found at: $APK_DIR"
+  warn "No APK found in build output."
   info "Check build output above for any errors."
 fi
 

@@ -2,6 +2,10 @@
 *.apk
 *.aab
 
+# Copied APKs in downloads/
+downloads/*.apk
+downloads/*.aab
+
 # Rust build artifacts
 src-tauri/target/
 
