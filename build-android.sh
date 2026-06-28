@@ -35,7 +35,7 @@ err()   { echo -e "${RED}[ERROR]${NC} $*"; }
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-BUILD_TYPE="${1:-release}"        # default: release
+BUILD_TYPE="${1:-debug}"        # default: release
 if [[ "$BUILD_TYPE" == "--help" || "$BUILD_TYPE" == "-h" ]]; then
   sed -n '/^#/,/^$/p' "$0" | head -n -1 | sed 's/^# //; s/^#//'
   exit 0

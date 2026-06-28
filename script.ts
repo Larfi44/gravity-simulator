@@ -11,6 +11,8 @@ interface SimulationState {
   elapsedTime: number;
   position: { x: number; y: number };
   velocity: { x: number; y: number };
+  firstCollisionTime: number | null;
+  firstCollisionRecorded: boolean;
 }
 
 interface SavedConfig {
@@ -215,6 +217,8 @@ class GravitySimulator {
       elapsedTime: 0,
       position: { x: 50, y: 0 },
       velocity: { x: 0, y: 0 },
+      firstCollisionTime: null,
+      firstCollisionRecorded: false,
     };
     this.t = getLang();
     this.loadSaves();
@@ -265,6 +269,16 @@ class GravitySimulator {
     document.getElementById('simHeightDisplay')!.textContent = h.toFixed(1);
     document.getElementById('simTimeDisplay')!.textContent =
       this.state.elapsedTime.toFixed(2);
+
+    // Compute ball speed in m/s from pixel velocity
+    const pxPerM = this.RANGE() / this.state.spawnHeight;
+    const speedPx = Math.sqrt(
+      this.state.velocity.x * this.state.velocity.x +
+        this.state.velocity.y * this.state.velocity.y,
+    );
+    const speedMs = speedPx / pxPerM;
+    document.getElementById('simBallSpeedDisplay')!.textContent =
+      speedMs.toFixed(1);
   }
 
   private initElements(): void {
@@ -345,18 +359,18 @@ class GravitySimulator {
     const timeScaleSlider = document.getElementById(
       'timeScaleSlider',
     ) as HTMLInputElement;
-    const simSpeedDisplay = document.getElementById(
-      'simSpeedDisplay',
+    const simTimeScaleDisplay = document.getElementById(
+      'simTimeScaleDisplay',
     ) as HTMLElement;
     timeScaleSlider.addEventListener('input', (e) => {
       const val = parseInt((e.target as HTMLInputElement).value);
       this.state.timeScale = Math.pow(10, val / 100);
-      simSpeedDisplay.textContent = 'x' + this.state.timeScale.toFixed(2);
+      simTimeScaleDisplay.textContent = 'x' + this.state.timeScale.toFixed(2);
     });
     document.getElementById('btnResetSpeed')!.addEventListener('click', () => {
       this.state.timeScale = 1;
       timeScaleSlider.value = '0';
-      simSpeedDisplay.textContent = 'x1.00';
+      simTimeScaleDisplay.textContent = 'x1.00';
     });
     document
       .getElementById('btnPauseSim')!
@@ -550,7 +564,11 @@ class GravitySimulator {
     this.state.elapsedTime = 0;
     (document.getElementById('timeScaleSlider') as HTMLInputElement).value =
       '0';
-    document.getElementById('simSpeedDisplay')!.textContent = 'x1.00';
+    this.state.firstCollisionTime = null;
+    this.state.firstCollisionRecorded = false;
+    document.getElementById('simCollisionTimeDisplay')!.textContent = '—';
+    document.getElementById('simBallSpeedDisplay')!.textContent = '0.0';
+    document.getElementById('simTimeScaleDisplay')!.textContent = 'x1.00';
     document.getElementById('settings-panel')!.classList.add('hidden');
     document.getElementById('sim-controls')!.classList.remove('hidden');
     document.getElementById('btnPauseSim')!.textContent = this._('pause');
@@ -581,14 +599,39 @@ class GravitySimulator {
     this.state.position.x += this.state.velocity.x * dt;
     this.state.position.y += this.state.velocity.y * dt;
     this.state.elapsedTime += 0.016 * this.state.timeScale;
-    // Ground
+    // Ground collision
     if (this.state.position.y > this.BOTTOM()) {
+      // Record first collision time
+      if (!this.state.firstCollisionRecorded) {
+        this.state.firstCollisionTime = this.state.elapsedTime;
+        this.state.firstCollisionRecorded = true;
+        document.getElementById('simCollisionTimeDisplay')!.textContent =
+          this.state.elapsedTime.toFixed(2);
+      }
+
       this.state.position.y = this.BOTTOM();
       if (Math.abs(this.state.velocity.y) > 2)
         this.state.velocity.y *= -this.state.bounce;
       else this.state.velocity.y = 0;
       this.state.velocity.x *= 1 - this.state.friction * 0.5;
       if (Math.abs(this.state.velocity.x) < 5) this.state.velocity.x = 0;
+
+      // Stop simulation when ball has fully stopped (both velocity components near zero)
+      if (
+        Math.abs(this.state.velocity.y) < 0.01 &&
+        Math.abs(this.state.velocity.x) < 0.01
+      ) {
+        this.state.velocity.x = 0;
+        this.state.velocity.y = 0;
+        this.state.isRunning = false;
+        if (this.animationId) {
+          cancelAnimationFrame(this.animationId);
+          this.animationId = null;
+        }
+        this.updateSimStats();
+        this.draw();
+        return;
+      }
     }
     // Walls
     if (

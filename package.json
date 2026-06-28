@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "description": "Gravity Simulator - Android app built with Tauri",
   "scripts": {
+    "start": "python3 -m http.server 8000",
     "build:android": "bash build-android.sh",
     "build:android:quick": "npm run copy:frontend && npx tauri android build --apk",
     "build:android:debug": "npm run copy:frontend && npx tauri android build --apk --debug",
