@@ -168,6 +168,8 @@ class GravitySimulator {
         this.pendingSaveName = null;
         this.BALL_R = 12;
         this.TOP = 11;
+        /** Earth radius in meters, used for height-dependent gravity */
+        this.EARTH_RADIUS = 6371000;
         this.canvas = document.getElementById('simCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.state = {
@@ -178,6 +180,7 @@ class GravitySimulator {
             friction: 0.5,
             bounce: 0.7,
             spawnHeight: 100,
+            gravityVarEnabled: false,
             isRunning: false,
             timeScale: 1,
             elapsedTime: 0,
@@ -295,6 +298,12 @@ class GravitySimulator {
                 };
                 this.draw();
             }
+        });
+        // Height-dependent gravity toggle
+        document
+            .getElementById('gravityVarToggle')
+            .addEventListener('change', (e) => {
+            this.state.gravityVarEnabled = e.target.checked;
         });
         document
             .getElementById('btnStart')
@@ -502,12 +511,26 @@ class GravitySimulator {
         this.updateSimStats();
         this.animate();
     }
+    /** Get current effective gravity based on height above surface */
+    effectiveGravity(currentHeightMeters) {
+        if (!this.state.gravityVarEnabled) {
+            return this.state.gravity;
+        }
+        // Newton's inverse-square law: g(h) = g0 * (R / (R + h))^2
+        const r = this.EARTH_RADIUS;
+        const h = Math.max(0, currentHeightMeters);
+        return this.state.gravity * (r / (r + h)) * (r / (r + h));
+    }
     animate() {
         if (!this.state.isRunning)
             return;
         const dt = 0.016 * this.state.timeScale;
         const pxPerM = this.RANGE() / this.state.spawnHeight;
-        const gPx = this.state.gravity * pxPerM;
+        // Use height-dependent gravity when toggle is on
+        const fraction = (this.BOTTOM() - this.state.position.y) / this.RANGE();
+        const currentHeightMeters = Math.max(0, fraction * this.state.spawnHeight);
+        const gEffective = this.effectiveGravity(currentHeightMeters);
+        const gPx = gEffective * pxPerM;
         this.state.velocity.x *= 1 - this.state.drag * dt;
         this.state.velocity.y *= 1 - this.state.drag * dt;
         this.state.velocity.y += gPx * dt;

@@ -6,6 +6,7 @@ interface SimulationState {
   friction: number;
   bounce: number;
   spawnHeight: number;
+  gravityVarEnabled: boolean;
   isRunning: boolean;
   timeScale: number;
   elapsedTime: number;
@@ -212,6 +213,7 @@ class GravitySimulator {
       friction: 0.5,
       bounce: 0.7,
       spawnHeight: 100,
+      gravityVarEnabled: false,
       isRunning: false,
       timeScale: 1,
       elapsedTime: 0,
@@ -346,6 +348,13 @@ class GravitySimulator {
         this.draw();
       }
     });
+    // Height-dependent gravity toggle
+    document
+      .getElementById('gravityVarToggle')!
+      .addEventListener('change', (e) => {
+        this.state.gravityVarEnabled = (e.target as HTMLInputElement).checked;
+      });
+
     document
       .getElementById('btnStart')!
       .addEventListener('click', () => this.startSimulation());
@@ -588,11 +597,29 @@ class GravitySimulator {
     this.animate();
   }
 
+  /** Earth radius in meters, used for height-dependent gravity */
+  private readonly EARTH_RADIUS = 6371000;
+
+  /** Get current effective gravity based on height above surface */
+  private effectiveGravity(currentHeightMeters: number): number {
+    if (!this.state.gravityVarEnabled) {
+      return this.state.gravity;
+    }
+    // Newton's inverse-square law: g(h) = g0 * (R / (R + h))^2
+    const r = this.EARTH_RADIUS;
+    const h = Math.max(0, currentHeightMeters);
+    return this.state.gravity * (r / (r + h)) * (r / (r + h));
+  }
+
   private animate(): void {
     if (!this.state.isRunning) return;
     const dt = 0.016 * this.state.timeScale;
     const pxPerM = this.RANGE() / this.state.spawnHeight;
-    const gPx = this.state.gravity * pxPerM;
+    // Use height-dependent gravity when toggle is on
+    const fraction = (this.BOTTOM() - this.state.position.y) / this.RANGE();
+    const currentHeightMeters = Math.max(0, fraction * this.state.spawnHeight);
+    const gEffective = this.effectiveGravity(currentHeightMeters);
+    const gPx = gEffective * pxPerM;
     this.state.velocity.x *= 1 - this.state.drag * dt;
     this.state.velocity.y *= 1 - this.state.drag * dt;
     this.state.velocity.y += gPx * dt;
