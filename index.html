@@ -33,6 +33,7 @@
             <button class="planet-btn" data-g="274">Sun</button>
           </div>
           <label
+            id="gravityVarLabel"
             style="
               display: flex;
               align-items: center;
@@ -80,7 +81,7 @@
             />
           </div>
           <div class="control-group">
-            <label id="dragLabel">Air Resistance (Drag)</label>
+            <label id="dragLabel">Air Resistance</label>
             <input
               type="range"
               id="dragSlider"
@@ -118,6 +119,16 @@
           </div>
         </div>
 
+        <!-- Full width: Settings -->
+        <div class="control-group full-width">
+          <label id="appSettingsLabel">⚙️ Settings</label>
+          <div class="action-row">
+            <button class="btn btn-secondary" id="btnAppSettings">
+              ⚙️ Settings
+            </button>
+          </div>
+        </div>
+
         <!-- Full width: Data Management -->
         <div class="control-group full-width">
           <label id="dataLabel">💾 Data Management</label>
@@ -142,6 +153,115 @@
           <button class="btn btn-primary" id="btnStart">
             ▶ Start Simulation
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- App Settings Modal -->
+    <div class="modal-overlay" id="appSettingsModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="appSettingsTitle">⚙️ Settings</h3>
+          <button
+            class="btn btn-danger btn-small"
+            id="closeAppSettings"
+            style="padding: 4px 10px"
+          >
+            ✕
+          </button>
+        </div>
+        <div
+          class="modal-body"
+          style="
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 0;
+          "
+        >
+          <div>
+            <label id="langLabel" style="font-size: 0.9rem; margin-bottom: 10px"
+              >Language</label
+            >
+            <div
+              id="langToggle"
+              style="
+                display: flex;
+                gap: 0;
+                border-radius: 8px;
+                overflow: hidden;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+              "
+            >
+              <button
+                data-lang="en"
+                style="
+                  flex: 1;
+                  padding: 10px;
+                  border: none;
+                  background: rgba(99, 102, 241, 0.3);
+                  color: white;
+                  font-weight: 600;
+                  cursor: pointer;
+                  font-size: 0.9rem;
+                  transition: background 0.2s;
+                "
+              >
+                English
+              </button>
+              <button
+                data-lang="ru"
+                style="
+                  flex: 1;
+                  padding: 10px;
+                  border: none;
+                  background: rgba(0, 0, 0, 0.35);
+                  color: white;
+                  font-weight: 600;
+                  cursor: pointer;
+                  font-size: 0.9rem;
+                  transition: background 0.2s;
+                "
+              >
+                Русский
+              </button>
+            </div>
+          </div>
+          <div
+            style="
+              text-align: center;
+              font-size: 0.75rem;
+              color: var(--text-muted);
+              border-top: 1px solid rgba(255, 255, 255, 0.06);
+              padding-top: 14px;
+              display: flex;
+              flex-direction: column;
+              gap: 14px;
+              align-items: center;
+            "
+          >
+            <div>
+              <span id="madeByLabel">Created by</span>
+              <a
+                href="https://larfi44.github.io/yarik-studio/index.html"
+                target="_blank"
+                style="
+                  color: var(--accent);
+                  text-decoration: none;
+                  font-weight: 600;
+                "
+                >Yarik Studio</a
+              >
+            </div>
+            <a
+              class="btn-donate-glow"
+              href="https://pay.cloudtips.ru/p/b94e349b"
+              target="_blank"
+            >
+              <span class="btn-icon">❤️</span>
+              <span class="btn-text" id="donateText">Donate</span>
+            </a>
+          </div>
         </div>
       </div>
     </div>

@@ -10,10 +10,14 @@ const LANG_DATA = {
         'friction-label': 'Friction Coefficient',
         'bounce-label': 'Bounce (Restitution)',
         'data-label': '\uD83D\uDCBE Data Management',
+        'app-settings-label': '\u2699\uFE0F Settings',
+        'app-settings-btn': '\u2699\uFE0F Settings',
         'save-btn': '\uD83D\uDCBE Save Settings',
         'load-btn': '\uD83D\uDCC2 Load Settings',
         'start-btn': '\u25B6 Start Simulation',
         'sim-height': 'Height:',
+        'sim-ball-speed': 'Ball Speed:',
+        'sim-collision-time': 'First Collision:',
         'sim-time': 'Time:',
         'sim-speed': 'Speed:',
         pause: 'Pause',
@@ -38,53 +42,77 @@ const LANG_DATA = {
         sun: 'Sun',
         m: 'm',
         s: 's',
+        'gravity-var-label': 'Gravity depends on height',
+        'lang-label': 'Language',
+        'made-by': 'Created by ',
+        'footer-title': 'Yarik Studio',
+        donate: 'Donate',
+        'settings-modal-title': '\u2699\uFE0F Settings',
     },
     ru: {
-        'settings-title': '\u26A1 Настройки симуляции',
-        'gravity-label': 'Ускорение свободного падения (м/с\u00B2)',
-        'speed-label': 'Начальная скорость (м/с)',
-        'angle-label': 'Угол запуска (град)',
-        'height-label': 'Высота падения (м)',
-        'drag-label': 'Сопротивление воздуха',
-        'friction-label': 'Коэффициент трения',
-        'bounce-label': 'Отскок (упругость)',
-        'data-label': '\uD83D\uDCBE Управление данными',
-        'save-btn': '\uD83D\uDCBE Сохранить настройки',
-        'load-btn': '\uD83D\uDCC2 Загрузить настройки',
-        'start-btn': '\u25B6 Запустить симуляцию',
-        'sim-height': 'Высота:',
-        'sim-time': 'Время:',
-        'sim-speed': 'Скорость:',
-        pause: 'Пауза',
-        resume: 'Продолжить',
-        close: '\u2715 Закрыть',
-        'save-name-title': '\uD83D\uDCBE Сохранить конфигурацию',
-        'save-name-prompt': 'Введите название для сохранения:',
-        'save-name-placeholder': 'Мои настройки',
-        'save-cancel': 'Отмена',
-        'save-confirm': 'Сохранить',
-        'load-title': '\uD83D\uDCC2 Сохранённые конфигурации',
-        'load-empty': 'Сохранений не найдено.',
-        load: 'Загрузить',
-        delete: 'Удалить',
-        earth: 'Земля',
-        moon: 'Луна',
-        mars: 'Марс',
-        venus: 'Венера',
-        jupiter: 'Юпитер',
-        saturn: 'Сатурн',
-        pluto: 'Плутон',
-        sun: 'Солнце',
-        m: 'м',
-        s: 'с',
+        'settings-title': '\u26A1 Gravity Simulator',
+        'gravity-label': '\u0423\u0441\u043A\u043E\u0440\u0435\u043D\u0438\u0435 \u0441\u0432\u043E\u0431\u043E\u0434\u043D\u043E\u0433\u043E \u043F\u0430\u0434\u0435\u043D\u0438\u044F (\u043C/\u0441\u00B2)',
+        'speed-label': '\u041D\u0430\u0447\u0430\u043B\u044C\u043D\u0430\u044F \u0441\u043A\u043E\u0440\u043E\u0441\u0442\u044C (\u043C/\u0441)',
+        'angle-label': '\u0423\u0433\u043E\u043B \u0437\u0430\u043F\u0443\u0441\u043A\u0430 (\u0433\u0440\u0430\u0434)',
+        'height-label': '\u0412\u044B\u0441\u043E\u0442\u0430 \u043F\u0430\u0434\u0435\u043D\u0438\u044F (\u043C)',
+        'drag-label': '\u0421\u043E\u043F\u0440\u043E\u0442\u0438\u0432\u043B\u0435\u043D\u0438\u0435 \u0432\u043E\u0437\u0434\u0443\u0445\u0430',
+        'friction-label': '\u041A\u043E\u044D\u0444\u0444\u0438\u0446\u0438\u0435\u043D\u0442 \u0442\u0440\u0435\u043D\u0438\u044F',
+        'bounce-label': '\u041E\u0442\u0441\u043A\u043E\u043A (\u0443\u043F\u0440\u0443\u0433\u043E\u0441\u0442\u044C)',
+        'data-label': '\uD83D\uDCBE \u0423\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435 \u0434\u0430\u043D\u043D\u044B\u043C\u0438',
+        'app-settings-label': '\u2699\uFE0F \u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438',
+        'app-settings-btn': '\u2699\uFE0F \u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438',
+        'save-btn': '\uD83D\uDCBE \u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438',
+        'load-btn': '\uD83D\uDCC2 \u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438',
+        'start-btn': '\u25B6 \u0417\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u044C \u0441\u0438\u043C\u0443\u043B\u044F\u0446\u0438\u044E',
+        'sim-height': '\u0412\u044B\u0441\u043E\u0442\u0430:',
+        'sim-ball-speed': '\u0421\u043A\u043E\u0440\u043E\u0441\u0442\u044C \u043C\u044F\u0447\u0430:',
+        'sim-collision-time': '\u041F\u0435\u0440\u0432\u043E\u0435 \u0441\u0442\u043E\u043B\u043A\u043D\u043E\u0432\u0435\u043D\u0438\u0435:',
+        'sim-time': '\u0412\u0440\u0435\u043C\u044F:',
+        'sim-speed': '\u0421\u043A\u043E\u0440\u043E\u0441\u0442\u044C:',
+        pause: '\u041F\u0430\u0443\u0437\u0430',
+        resume: '\u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u044C',
+        close: '\u2715 \u0417\u0430\u043A\u0440\u044B\u0442\u044C',
+        'save-name-title': '\uD83D\uDCBE \u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u043A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u044E',
+        'save-name-prompt': '\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u0435 \u0434\u043B\u044F \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u044F:',
+        'save-name-placeholder': '\u041C\u043E\u0438 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438',
+        'save-cancel': '\u041E\u0442\u043C\u0435\u043D\u0430',
+        'save-confirm': '\u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C',
+        'load-title': '\uD83D\uDCC2 \u0421\u043E\u0445\u0440\u0430\u043D\u0451\u043D\u043D\u044B\u0435 \u043A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u0438',
+        'load-empty': '\u0421\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u0439 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E.',
+        load: '\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C',
+        delete: '\u0423\u0434\u0430\u043B\u0438\u0442\u044C',
+        earth: '\u0417\u0435\u043C\u043B\u044F',
+        moon: '\u041B\u0443\u043D\u0430',
+        mars: '\u041C\u0430\u0440\u0441',
+        venus: '\u0412\u0435\u043D\u0435\u0440\u0430',
+        jupiter: '\u042E\u043F\u0438\u0442\u0435\u0440',
+        saturn: '\u0421\u0430\u0442\u0443\u0440\u043D',
+        pluto: '\u041F\u043B\u0443\u0442\u043E\u043D',
+        sun: '\u0421\u043E\u043B\u043D\u0446\u0435',
+        m: '\u043C',
+        s: '\u0441',
+        'gravity-var-label': '\u0413\u0440\u0430\u0432\u0438\u0442\u0430\u0446\u0438\u044F \u0437\u0430\u0432\u0438\u0441\u0438\u0442 \u043E\u0442 \u0432\u044B\u0441\u043E\u0442\u044B',
+        'lang-label': '\u042F\u0437\u044B\u043A',
+        'made-by': '\u0421\u043E\u0437\u0434\u0430\u043D\u043E ',
+        'footer-title': 'Yarik Studio',
+        donate: '\u041F\u043E\u0434\u0434\u0435\u0440\u0436\u0430\u0442\u044C',
+        'settings-modal-title': '\u2699\uFE0F \u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438',
     },
 };
 function getLang() {
+    const stored = localStorage.getItem('gravityLang');
+    if (stored === 'en' || stored === 'ru') {
+        return LANG_DATA[stored];
+    }
     const b = navigator.language || navigator.userLanguage || 'en';
     return LANG_DATA[b.startsWith('ru') ? 'ru' : 'en'];
 }
 function applyTranslations() {
     const t = getLang();
+    // Sync the app instance's language cache so togglePause() uses the correct translation
+    if (appInstance) {
+        appInstance['t'] = t;
+    }
     const map = {
         'settings-title': 'settings-title',
         gravityLabel: 'gravity-label',
@@ -94,7 +122,14 @@ function applyTranslations() {
         dragLabel: 'drag-label',
         frictionLabel: 'friction-label',
         bounceLabel: 'bounce-label',
+        gravityVarLabel: 'gravity-var-label',
         dataLabel: 'data-label',
+        appSettingsLabel: 'app-settings-label',
+        btnAppSettings: 'app-settings-btn',
+        appSettingsTitle: 'settings-modal-title',
+        langLabel: 'lang-label',
+        madeByLabel: 'made-by',
+        donateText: 'donate',
         btnSave: 'save-btn',
         btnLoad: 'load-btn',
         btnStart: 'start-btn',
@@ -116,13 +151,29 @@ function applyTranslations() {
             el.placeholder = t[key] || el.placeholder;
         }
         else {
-            el.textContent = t[key] || el.textContent;
+            if (el.children.length > 0) {
+                const nodes = el.childNodes;
+                for (let i = nodes.length - 1; i >= 0; i--) {
+                    const node = nodes[i];
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        const txt = node;
+                        txt.textContent = t[key] || key;
+                        if (txt.textContent.trim())
+                            break;
+                    }
+                }
+            }
+            else {
+                el.textContent = t[key] || el.textContent;
+            }
         }
     }
     const sl = {
         simHeightLabel: 'sim-height',
+        simBallSpeedLabel: 'sim-ball-speed',
+        simCollisionTimeLabel: 'sim-collision-time',
         simTimeLabel: 'sim-time',
-        simSpeedLabel: 'sim-speed',
+        simTimeScaleLabel: 'sim-speed',
     };
     for (const [id, key] of Object.entries(sl)) {
         const el = document.getElementById(id);
@@ -168,7 +219,6 @@ class GravitySimulator {
         this.pendingSaveName = null;
         this.BALL_R = 12;
         this.TOP = 11;
-        /** Earth radius in meters, used for height-dependent gravity */
         this.EARTH_RADIUS = 6371000;
         this.canvas = document.getElementById('simCanvas');
         this.ctx = this.canvas.getContext('2d');
@@ -231,13 +281,11 @@ class GravitySimulator {
         localStorage.setItem('gravitySaves', JSON.stringify(this.saves));
     }
     updateSimStats() {
-        const topMargin = 30;
         const fraction = (this.BOTTOM() - this.state.position.y) / this.RANGE();
         const h = Math.max(0, fraction * this.state.spawnHeight);
         document.getElementById('simHeightDisplay').textContent = h.toFixed(1);
         document.getElementById('simTimeDisplay').textContent =
             this.state.elapsedTime.toFixed(2);
-        // Compute ball speed in m/s from pixel velocity
         const pxPerM = this.RANGE() / this.state.spawnHeight;
         const speedPx = Math.sqrt(this.state.velocity.x * this.state.velocity.x +
             this.state.velocity.y * this.state.velocity.y);
@@ -299,12 +347,12 @@ class GravitySimulator {
                 this.draw();
             }
         });
-        // Height-dependent gravity toggle
-        document
-            .getElementById('gravityVarToggle')
-            .addEventListener('change', (e) => {
-            this.state.gravityVarEnabled = e.target.checked;
-        });
+        const gravityVarToggle = document.getElementById('gravityVarToggle');
+        if (gravityVarToggle) {
+            gravityVarToggle.addEventListener('change', (e) => {
+                this.state.gravityVarEnabled = e.target.checked;
+            });
+        }
         document
             .getElementById('btnStart')
             .addEventListener('click', () => this.startSimulation());
@@ -392,6 +440,53 @@ class GravitySimulator {
                     this.showLoadModal();
                 }
             }
+        });
+        const appSettingsModal = document.getElementById('appSettingsModal');
+        const btnAppSettings = document.getElementById('btnAppSettings');
+        const closeAppSettings = document.getElementById('closeAppSettings');
+        if (appSettingsModal && btnAppSettings && closeAppSettings) {
+            btnAppSettings.addEventListener('click', () => {
+                appSettingsModal.classList.add('active');
+            });
+            closeAppSettings.addEventListener('click', () => {
+                appSettingsModal.classList.remove('active');
+            });
+            appSettingsModal.addEventListener('click', (e) => {
+                if (e.target === appSettingsModal)
+                    appSettingsModal.classList.remove('active');
+            });
+        }
+        const langBtns = document.querySelectorAll('#langToggle button');
+        if (langBtns.length > 0) {
+            const currentLang = localStorage.getItem('gravityLang') ||
+                (navigator.language.startsWith('ru') ? 'ru' : 'en');
+            langBtns.forEach((btn) => {
+                const el = btn;
+                const lang = el.dataset.lang;
+                el.style.background =
+                    lang === currentLang
+                        ? 'rgba(99, 102, 241, 0.3)'
+                        : 'rgba(0, 0, 0, 0.35)';
+                btn.addEventListener('click', () => {
+                    if (lang && lang !== localStorage.getItem('gravityLang')) {
+                        localStorage.setItem('gravityLang', lang);
+                        applyTranslations();
+                        document.querySelectorAll('#langToggle button').forEach((b) => {
+                            const be = b;
+                            be.style.background =
+                                be.dataset.lang === lang
+                                    ? 'rgba(99, 102, 241, 0.3)'
+                                    : 'rgba(0, 0, 0, 0.35)';
+                        });
+                    }
+                });
+            });
+        }
+        document.querySelectorAll('a[target="_blank"]').forEach((link) => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                window.open(link.href, '_blank');
+            });
         });
         document.addEventListener('keydown', (e) => {
             if (e.target instanceof HTMLInputElement ||
@@ -511,12 +606,9 @@ class GravitySimulator {
         this.updateSimStats();
         this.animate();
     }
-    /** Get current effective gravity based on height above surface */
     effectiveGravity(currentHeightMeters) {
-        if (!this.state.gravityVarEnabled) {
+        if (!this.state.gravityVarEnabled)
             return this.state.gravity;
-        }
-        // Newton's inverse-square law: g(h) = g0 * (R / (R + h))^2
         const r = this.EARTH_RADIUS;
         const h = Math.max(0, currentHeightMeters);
         return this.state.gravity * (r / (r + h)) * (r / (r + h));
@@ -526,7 +618,6 @@ class GravitySimulator {
             return;
         const dt = 0.016 * this.state.timeScale;
         const pxPerM = this.RANGE() / this.state.spawnHeight;
-        // Use height-dependent gravity when toggle is on
         const fraction = (this.BOTTOM() - this.state.position.y) / this.RANGE();
         const currentHeightMeters = Math.max(0, fraction * this.state.spawnHeight);
         const gEffective = this.effectiveGravity(currentHeightMeters);
@@ -537,9 +628,7 @@ class GravitySimulator {
         this.state.position.x += this.state.velocity.x * dt;
         this.state.position.y += this.state.velocity.y * dt;
         this.state.elapsedTime += 0.016 * this.state.timeScale;
-        // Ground collision
         if (this.state.position.y > this.BOTTOM()) {
-            // Record first collision time
             if (!this.state.firstCollisionRecorded) {
                 this.state.firstCollisionTime = this.state.elapsedTime;
                 this.state.firstCollisionRecorded = true;
@@ -554,7 +643,6 @@ class GravitySimulator {
             this.state.velocity.x *= 1 - this.state.friction * 0.5;
             if (Math.abs(this.state.velocity.x) < 5)
                 this.state.velocity.x = 0;
-            // Stop simulation when ball has fully stopped (both velocity components near zero)
             if (Math.abs(this.state.velocity.y) < 0.01 &&
                 Math.abs(this.state.velocity.x) < 0.01) {
                 this.state.velocity.x = 0;
@@ -569,7 +657,6 @@ class GravitySimulator {
                 return;
             }
         }
-        // Walls
         if (this.state.position.x < 0 ||
             this.state.position.x > this.canvas.width) {
             this.state.velocity.x *= -0.8;
@@ -717,7 +804,8 @@ class GravitySimulator {
         this.draw();
     }
 }
+let appInstance = null;
 applyTranslations();
 window.addEventListener('DOMContentLoaded', () => {
-    new GravitySimulator();
+    appInstance = new GravitySimulator();
 });

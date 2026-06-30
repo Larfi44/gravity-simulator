@@ -1,38 +1,47 @@
-import struct, zlib, os
+#!/usr/bin/env python3
+"""
+generate-icons.py — Generate all platform icons from public/logo-gravity-simulator.png
 
-def create_rgba_png(path, w, h):
-    def chunk(ctype, data):
-        c = ctype + data
-        return struct.pack('>I', len(data)) + c + struct.pack('>I', zlib.crc32(c) & 0xffffffff)
-    sig = b'\x89PNG\r\n\x1a\n'
-    # Color type 6 = RGBA
-    ihdr = chunk(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, 6, 0, 0, 0))
-    raw = b''
-    for y in range(h):
-        raw += b'\x00'  # filter byte
-        for x in range(w):
-            # Simple gradient blue icon with full opacity
-            r = int(51 + (x / w) * 100) % 256
-            g = int(102 + (y / h) * 100) % 256
-            b_val = int(200 + ((x + y) / (w + h)) * 55) % 256
-            raw += bytes([r, g, b_val, 255])  # RGBA with alpha=255
-    idat = chunk(b'IDAT', zlib.compress(raw))
-    iend = chunk(b'IEND', b'')
-    with open(path, 'wb') as f:
-        f.write(sig + ihdr + idat + iend)
-    print(f"  Created RGBA icon: {path} ({w}x{h})")
+Uses PIL to resize the source image to a 1024x1024 master PNG, then invokes
+`cargo tauri icon` to produce all required icon formats (32x32, 128x128, etc.)
+"""
 
-icons_dir = "src-tauri/icons"
-os.makedirs(icons_dir, exist_ok=True)
+import os, sys, subprocess
+from PIL import Image
 
-create_rgba_png(f"{icons_dir}/32x32.png", 32, 32)
-create_rgba_png(f"{icons_dir}/128x128.png", 128, 128)
-create_rgba_png(f"{icons_dir}/128x128@2x.png", 256, 256)
+SOURCE = "public/logo-gravity-simulator.png"
+TEMP_MASTER = "/tmp/gravity-icon-master.png"
+ICONS_DIR = "src-tauri/icons"
 
-# For .icns and .ico just copy the PNG as placeholder
-import shutil
-shutil.copy(f"{icons_dir}/128x128.png", f"{icons_dir}/icon.icns")
-shutil.copy(f"{icons_dir}/32x32.png", f"{icons_dir}/icon.ico")
-print("  Created icon.icns (placeholder)")
-print("  Created icon.ico (placeholder)")
+# Ensure source exists
+if not os.path.isfile(SOURCE):
+    print(f"ERROR: Source icon not found: {SOURCE}", file=sys.stderr)
+    sys.exit(1)
+
+print(f"  Using source icon: {SOURCE}")
+
+# Step 1: Open source, convert to RGBA, resize to 1024x1024 on dark background
+img = Image.open(SOURCE).convert("RGBA")
+img.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
+
+bg = Image.new("RGBA", (1024, 1024), (15, 23, 42, 255))
+offset = ((1024 - img.width) // 2, (1024 - img.height) // 2)
+bg.paste(img, offset, img)
+bg.save(TEMP_MASTER)
+print(f"  Master icon created: {TEMP_MASTER} (1024x1024)")
+
+# Step 2: Remove old icons and generate new ones via cargo tauri icon
+os.makedirs(ICONS_DIR, exist_ok=True)
+print("  Generating all platform icons via cargo tauri icon...")
+result = subprocess.run(
+    ["cargo", "tauri", "icon", TEMP_MASTER, "--output", ICONS_DIR],
+    capture_output=True, text=True, cwd="."
+)
+if result.returncode != 0:
+    print(f"ERROR: cargo tauri icon failed:\n{result.stderr}", file=sys.stderr)
+    sys.exit(1)
+for line in result.stdout.splitlines():
+    if line.strip():
+        print(f"  {line}")
+
 print("Done!")

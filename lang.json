@@ -5,7 +5,7 @@
     "speed-label": "Initial Speed (m/s)",
     "angle-label": "Launch Angle (deg)",
     "height-label": "Falling Height (m)",
-    "drag-label": "Air Resistance (Drag)",
+    "drag-label": "Air Resistance",
     "friction-label": "Friction Coefficient",
     "bounce-label": "Bounce (Restitution)",
     "data-label": "💾 Data Management",

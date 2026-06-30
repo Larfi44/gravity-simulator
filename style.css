@@ -452,6 +452,29 @@ input[type='range']::-moz-range-thumb {
   border-radius: 3px;
 }
 
+.btn-donate-glow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, var(--primary), #6366f1);
+  color: white;
+  padding: 8px 20px;
+  border-radius: 25px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+  box-shadow: 0 0 20px var(--accent-glow);
+  cursor: pointer;
+}
+.btn-donate-glow:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 30px var(--accent-glow);
+}
+.btn-icon {
+  font-size: 1rem;
+}
+
 /* Mobile responsive - small screens (width or height) */
 @media (max-width: 350px), (max-height: 350px) {
   html,

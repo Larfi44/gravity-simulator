@@ -171,12 +171,10 @@ ok "All prerequisites satisfied"
 # ─── Step 1 — Generate Icons ─────────────────────────────────────────────────
 echo ""
 info "Step 1/4 — Generating app icons…"
-if [[ ! -d "src-tauri/icons" || -z "$(ls -A src-tauri/icons 2>/dev/null)" ]]; then
-  python3 generate-icons.py
-  ok "Icons generated in src-tauri/icons/"
-else
-  ok "Icons already exist in src-tauri/icons/"
-fi
+info "Generating icons from public/logo-gravity-simulator.png..."
+rm -rf src-tauri/icons
+python3 generate-icons.py
+ok "Icons generated in src-tauri/icons/"
 
 # ─── Step 2 — Ensure Android project is initialised ──────────────────────────
 echo ""
