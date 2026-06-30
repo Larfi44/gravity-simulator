@@ -475,7 +475,61 @@ input[type='range']::-moz-range-thumb {
   font-size: 1rem;
 }
 
-/* Mobile responsive - small screens (width or height) */
+/* Responsive: viewport width < 600px — shrink sim-controls */
+@media (max-width: 600px) {
+  #sim-controls {
+    left: 6px;
+    padding: 10px 6px;
+    gap: 5px;
+    border-radius: 10px;
+    max-width: 40vw;
+  }
+  #sim-controls .sim-stat {
+    font-size: 0.7rem;
+  }
+  #sim-controls #simBallSpeedLabel,
+  #sim-controls #simCollisionTimeLabel {
+    font-size: 0.6rem;
+  }
+  #sim-controls input[type='range'] {
+    width: 60px;
+  }
+  #sim-controls .btn-small {
+    padding: 3px 6px;
+    font-size: 0.6rem;
+  }
+}
+
+/* Responsive: viewport width < 350px — even smaller */
+@media (max-width: 350px) {
+  #sim-controls {
+    left: 4px;
+    padding: 6px 4px;
+    gap: 3px;
+    border-radius: 8px;
+    max-width: 50vw;
+  }
+  #sim-controls .sim-stat {
+    font-size: 0.55rem;
+  }
+  #sim-controls #timeScaleSlider {
+    width: 30px !important;
+    height: 3px;
+  }
+  #sim-controls #btnResetSpeed {
+    padding: 2px 3px !important;
+    font-size: 0.45rem !important;
+  }
+  #sim-controls .btn-small {
+    padding: 2px 4px;
+    font-size: 0.5rem;
+  }
+  #sim-controls .btn-small#btnPauseSim {
+    min-width: 40px;
+  }
+}
+
+/* Mobile responsive - small screens (width or height) — keep original at bottom */
 @media (max-width: 350px), (max-height: 350px) {
   html,
   body {

@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 const LANG_DATA = {
     en: {
         'settings-title': '\u26A1 Gravity Simulator',
@@ -482,10 +515,25 @@ class GravitySimulator {
                 });
             });
         }
+        // External links — open in default system browser (important for Tauri Android)
+        const isTauri = typeof window !== 'undefined' && window.__TAURI_INTERNALS__;
         document.querySelectorAll('a[target="_blank"]').forEach((link) => {
-            link.addEventListener('click', (e) => {
+            link.addEventListener('click', async (e) => {
                 e.preventDefault();
-                window.open(link.href, '_blank');
+                const href = link.href;
+                if (isTauri) {
+                    try {
+                        const { openUrl } = await Promise.resolve().then(() => __importStar(require('@tauri-apps/plugin-opener')));
+                        await openUrl(href);
+                    }
+                    catch (err) {
+                        console.error('Failed to open URL via Tauri opener, falling back to window.open:', err);
+                        window.open(href, '_blank');
+                    }
+                }
+                else {
+                    window.open(href, '_blank');
+                }
             });
         });
         document.addEventListener('keydown', (e) => {
@@ -616,51 +664,60 @@ class GravitySimulator {
     animate() {
         if (!this.state.isRunning)
             return;
+        // Use sub-stepping: at high timeScale, run multiple small physics steps per frame
+        // so collision detection doesn't miss bounces
         const dt = 0.016 * this.state.timeScale;
         const pxPerM = this.RANGE() / this.state.spawnHeight;
-        const fraction = (this.BOTTOM() - this.state.position.y) / this.RANGE();
-        const currentHeightMeters = Math.max(0, fraction * this.state.spawnHeight);
-        const gEffective = this.effectiveGravity(currentHeightMeters);
-        const gPx = gEffective * pxPerM;
-        this.state.velocity.x *= 1 - this.state.drag * dt;
-        this.state.velocity.y *= 1 - this.state.drag * dt;
-        this.state.velocity.y += gPx * dt;
-        this.state.position.x += this.state.velocity.x * dt;
-        this.state.position.y += this.state.velocity.y * dt;
-        this.state.elapsedTime += 0.016 * this.state.timeScale;
-        if (this.state.position.y > this.BOTTOM()) {
-            if (!this.state.firstCollisionRecorded) {
-                this.state.firstCollisionTime = this.state.elapsedTime;
-                this.state.firstCollisionRecorded = true;
-                document.getElementById('simCollisionTimeDisplay').textContent =
-                    this.state.elapsedTime.toFixed(2);
-            }
-            this.state.position.y = this.BOTTOM();
-            if (Math.abs(this.state.velocity.y) > 2)
-                this.state.velocity.y *= -this.state.bounce;
-            else
-                this.state.velocity.y = 0;
-            this.state.velocity.x *= 1 - this.state.friction * 0.5;
-            if (Math.abs(this.state.velocity.x) < 5)
-                this.state.velocity.x = 0;
-            if (Math.abs(this.state.velocity.y) < 0.01 &&
-                Math.abs(this.state.velocity.x) < 0.01) {
-                this.state.velocity.x = 0;
-                this.state.velocity.y = 0;
-                this.state.isRunning = false;
-                if (this.animationId) {
-                    cancelAnimationFrame(this.animationId);
-                    this.animationId = null;
+        const steps = Math.max(1, Math.ceil(this.state.timeScale / 2));
+        const subDt = dt / steps;
+        for (let step = 0; step < steps; step++) {
+            const fraction = (this.BOTTOM() - this.state.position.y) / this.RANGE();
+            const currentHeightMeters = Math.max(0, fraction * this.state.spawnHeight);
+            const gEffective = this.effectiveGravity(currentHeightMeters);
+            const gPx = gEffective * pxPerM;
+            this.state.velocity.x *= 1 - this.state.drag * subDt;
+            this.state.velocity.y *= 1 - this.state.drag * subDt;
+            this.state.velocity.y += gPx * subDt;
+            this.state.position.x += this.state.velocity.x * subDt;
+            this.state.position.y += this.state.velocity.y * subDt;
+            this.state.elapsedTime += (0.016 * this.state.timeScale) / steps;
+            // Ground collision
+            if (this.state.position.y > this.BOTTOM()) {
+                if (!this.state.firstCollisionRecorded) {
+                    this.state.firstCollisionTime = this.state.elapsedTime;
+                    this.state.firstCollisionRecorded = true;
+                    document.getElementById('simCollisionTimeDisplay').textContent =
+                        this.state.elapsedTime.toFixed(2);
                 }
-                this.updateSimStats();
-                this.draw();
-                return;
+                this.state.position.y = this.BOTTOM();
+                if (Math.abs(this.state.velocity.y) > 2)
+                    this.state.velocity.y *= -this.state.bounce;
+                else
+                    this.state.velocity.y = 0;
+                this.state.velocity.x *= 1 - this.state.friction * 0.5;
+                if (Math.abs(this.state.velocity.x) < 5)
+                    this.state.velocity.x = 0;
+                // Stop when ball has fully settled
+                if (Math.abs(this.state.velocity.y) < 0.01 &&
+                    Math.abs(this.state.velocity.x) < 0.01) {
+                    this.state.velocity.x = 0;
+                    this.state.velocity.y = 0;
+                    this.state.isRunning = false;
+                    if (this.animationId) {
+                        cancelAnimationFrame(this.animationId);
+                        this.animationId = null;
+                    }
+                    this.updateSimStats();
+                    this.draw();
+                    return;
+                }
             }
-        }
-        if (this.state.position.x < 0 ||
-            this.state.position.x > this.canvas.width) {
-            this.state.velocity.x *= -0.8;
-            this.state.position.x = Math.max(0, Math.min(this.canvas.width, this.state.position.x));
+            // Wall collision
+            if (this.state.position.x < 0 ||
+                this.state.position.x > this.canvas.width) {
+                this.state.velocity.x *= -0.8;
+                this.state.position.x = Math.max(0, Math.min(this.canvas.width, this.state.position.x));
+            }
         }
         this.updateSimStats();
         this.draw();
